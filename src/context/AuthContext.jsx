@@ -19,37 +19,52 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true)
   const [isAdmin, setIsAdmin] = useState(false)
 
-  // Verificar se usuário é admin
-  const checkAdminStatus = async (userId) => {
-    if (!userId) {
-      setIsAdmin(false)
-      return
-    }
+  // Emails com permissão de admin
+  const ADMIN_EMAILS = [
+    'admin@motorspersonalizados.com', 
+    'guilherme@admin.com',
+    'gdevsete@outlook.com.br'
+  ]
 
-    try {
-      // Verificar na tabela de admins ou por email específico
-      const { data: userData } = await supabase.auth.getUser()
-      // Por padrão, considerar admin por email (pode ser adaptado)
-      const adminEmails = ['admin@motorspersonalizados.com', 'guilherme@admin.com']
-      setIsAdmin(adminEmails.includes(userData?.user?.email || ''))
-    } catch (error) {
-      console.error('Erro ao verificar status de admin:', error)
-      setIsAdmin(false)
-    }
+  // Verificar se usuário é admin (síncrono, usando email da sessão)
+  const checkAdminStatus = (userEmail) => {
+    const isAdminUser = ADMIN_EMAILS.includes(userEmail?.toLowerCase() || '')
+    setIsAdmin(isAdminUser)
+    console.debug('Admin status:', userEmail, isAdminUser)
+    return isAdminUser
   }
 
   useEffect(() => {
+    // Flag para evitar atualizações após desmontagem
+    let mounted = true
+
+    // Timeout de segurança - se demorar mais de 5s, para de carregar
+    const timeout = setTimeout(() => {
+      if (mounted && loading) {
+        console.debug('Autenticação: timeout atingido, continuando sem sessão')
+        setLoading(false)
+      }
+    }, 5000)
+
     // Obter sessão inicial
     const getInitialSession = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession()
-        setSession(session)
-        setUser(session?.user ?? null)
-        await checkAdminStatus(session?.user?.id)
+        if (mounted) {
+          setSession(session)
+          setUser(session?.user ?? null)
+          // Verificar admin usando email da sessão (síncrono)
+          if (session?.user?.email) {
+            checkAdminStatus(session.user.email)
+          }
+        }
       } catch (error) {
-        console.error('Erro ao obter sessão:', error)
+        console.debug('Erro ao obter sessão:', error.message)
       } finally {
-        setLoading(false)
+        if (mounted) {
+          setLoading(false)
+          clearTimeout(timeout)
+        }
       }
     }
 
@@ -58,15 +73,26 @@ export const AuthProvider = ({ children }) => {
     // Listener para mudanças de autenticação
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (_event, session) => {
-        setSession(session)
-        setUser(session?.user ?? null)
-        await checkAdminStatus(session?.user?.id)
-        setLoading(false)
+        if (mounted) {
+          setSession(session)
+          setUser(session?.user ?? null)
+          // Verificar admin usando email da sessão
+          if (session?.user?.email) {
+            checkAdminStatus(session.user.email)
+          } else {
+            setIsAdmin(false)
+          }
+          setLoading(false)
+        }
       }
     )
 
     // Cleanup do listener
-    return () => subscription.unsubscribe()
+    return () => {
+      mounted = false
+      subscription.unsubscribe()
+      clearTimeout(timeout)
+    }
   }, [])
 
   /**

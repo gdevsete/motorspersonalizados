@@ -4,26 +4,66 @@
  */
 
 import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { useOrders } from '../../hooks/useOrders'
+import { supabase } from '../../lib/supabase'
 import { OrderSkeleton } from '../../components/UI/Skeleton'
+import { LoadingSpinner } from '../../components/UI'
 import { formatCurrency, formatDate, STATUS_LABELS, STATUS_COLORS } from '../../utils'
-import { FiPackage, FiPlus, FiExternalLink, FiUser, FiMail, FiPhone, FiMapPin, FiTruck, FiChevronDown, FiChevronUp, FiImage } from 'react-icons/fi'
+import { FiPackage, FiPlus, FiExternalLink, FiUser, FiMail, FiPhone, FiMapPin, FiTruck, FiChevronDown, FiChevronUp, FiImage, FiLogOut } from 'react-icons/fi'
+import toast from 'react-hot-toast'
 
 const MinhaConta = () => {
-  const { user } = useAuth()
-  const { orders, loading, fetchUserOrders } = useOrders()
+  const { user, loading: authLoading } = useAuth()
+  const { orders, loading, error, fetchUserOrders } = useOrders()
   const [expandedOrder, setExpandedOrder] = useState(null)
+  const navigate = useNavigate()
 
-  // Carregar pedidos ao montar
+  // Fazer logout
+  const handleLogout = async () => {
+    try {
+      const { error } = await supabase.auth.signOut()
+      
+      if (error) {
+        console.error('Erro no logout:', error)
+        toast.error('Erro ao sair da conta')
+        return
+      }
+      
+      // Limpar storage
+      sessionStorage.clear()
+      
+      toast.success('Você saiu da conta')
+      navigate('/')
+      
+      // Forçar reload para limpar estado
+      window.location.reload()
+    } catch (err) {
+      console.error('Erro inesperado no logout:', err)
+      toast.error('Erro ao sair')
+    }
+  }
+
+  // Carregar pedidos quando usuário estiver disponível
   useEffect(() => {
-    fetchUserOrders()
-  }, [fetchUserOrders])
+    if (user) {
+      fetchUserOrders()
+    }
+  }, [user, fetchUserOrders])
 
   // Toggle expandir pedido
   const toggleExpand = (orderId) => {
     setExpandedOrder(expandedOrder === orderId ? null : orderId)
+  }
+
+  // Mostrar loading enquanto autenticação está carregando
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <LoadingSpinner size="lg" />
+      </div>
+    )
   }
 
   return (
@@ -80,11 +120,19 @@ const MinhaConta = () => {
               {/* Ações */}
               <Link
                 to="/personalizar"
-                className="btn-glow w-full flex items-center justify-center gap-2"
+                className="btn-glow w-full flex items-center justify-center gap-2 mb-3"
               >
                 <FiPlus className="w-5 h-5" />
                 Novo Pedido
               </Link>
+              
+              <button
+                onClick={handleLogout}
+                className="w-full py-2 px-4 border border-red-500/50 rounded-lg text-red-500 hover:bg-red-500/10 transition-colors flex items-center justify-center gap-2"
+              >
+                <FiLogOut className="w-4 h-4" />
+                Sair da Conta
+              </button>
             </div>
           </div>
 
@@ -104,6 +152,22 @@ const MinhaConta = () => {
               // Loading skeletons
               <div className="space-y-4">
                 {[1, 2, 3].map((i) => <OrderSkeleton key={i} />)}
+              </div>
+            ) : error ? (
+              // Estado de erro
+              <div className="card text-center py-12">
+                <div className="w-20 h-20 mx-auto mb-6 bg-red-500/20 rounded-full 
+                              flex items-center justify-center">
+                  <FiPackage className="w-10 h-10 text-red-500" />
+                </div>
+                <h3 className="text-xl font-bold mb-2">Erro ao carregar pedidos</h3>
+                <p className="text-gray-400 mb-6">{error}</p>
+                <button 
+                  onClick={fetchUserOrders}
+                  className="btn-glow inline-flex items-center gap-2"
+                >
+                  Tentar novamente
+                </button>
               </div>
             ) : orders.length === 0 ? (
               // Estado vazio

@@ -16,8 +16,8 @@ import {
   Login, 
   Cadastro, 
   RecuperarSenha, 
-  MinhaConta, 
-  Admin 
+  MinhaConta,
+  Admin
 } from './pages'
 
 // Components
@@ -71,15 +71,8 @@ function App() {
             }
           />
 
-          {/* Protegidas - Admin */}
-          <Route
-            path="/admin"
-            element={
-              <ProtectedRoute requireAdmin>
-                <Admin />
-              </ProtectedRoute>
-            }
-          />
+          {/* Admin - verificação interna */}
+          <Route path="/admin" element={<Admin />} />
         </Route>
       </Routes>
     </Router>

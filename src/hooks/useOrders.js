@@ -21,20 +21,29 @@ export const useOrders = () => {
 
   // Buscar pedidos do usuário
   const fetchUserOrders = useCallback(async () => {
-    if (!user) return
+    if (!user) {
+      setLoading(false)
+      return
+    }
 
     setLoading(true)
     setError(null)
 
-    const { data, error } = await getUserOrders(user.id)
-    
-    if (error) {
-      setError(error.message)
-    } else {
-      setOrders(data || [])
+    try {
+      const { data, error } = await getUserOrders(user.id)
+      
+      if (error) {
+        setError(error.message)
+        console.error('Erro ao buscar pedidos:', error)
+      } else {
+        setOrders(data || [])
+      }
+    } catch (err) {
+      setError('Erro ao carregar pedidos')
+      console.error('Erro ao buscar pedidos:', err)
+    } finally {
+      setLoading(false)
     }
-    
-    setLoading(false)
   }, [user])
 
   // Buscar todos pedidos (admin)
@@ -42,20 +51,28 @@ export const useOrders = () => {
     setLoading(true)
     setError(null)
 
-    const { data, error } = await getAllOrders()
-    
-    if (error) {
-      setError(error.message)
-    } else {
-      setOrders(data || [])
+    try {
+      const { data, error } = await getAllOrders()
+      
+      if (error) {
+        setError(error.message)
+        console.error('Erro ao buscar todos os pedidos:', error)
+      } else {
+        setOrders(data || [])
+      }
+    } catch (err) {
+      setError('Erro ao carregar pedidos')
+      console.error('Erro ao buscar pedidos:', err)
+    } finally {
+      setLoading(false)
     }
-    
-    setLoading(false)
   }, [])
 
   // Criar novo pedido
-  const submitOrder = useCallback(async (orderData, imageFile) => {
-    if (!user) {
+  const submitOrder = useCallback(async (orderData, imageFile, overrideUserId = null) => {
+    const userId = overrideUserId || user?.id
+    
+    if (!userId) {
       return { error: { message: 'Usuário não autenticado' } }
     }
 
@@ -67,7 +84,7 @@ export const useOrders = () => {
 
       // Upload da imagem se fornecida
       if (imageFile) {
-        const { data: uploadedUrl, error: uploadError } = await uploadMotoImage(imageFile, user.id)
+        const { data: uploadedUrl, error: uploadError } = await uploadMotoImage(imageFile, userId)
         if (uploadError) throw uploadError
         imageUrl = uploadedUrl
       }
@@ -75,7 +92,7 @@ export const useOrders = () => {
       // Criar pedido
       const { data, error } = await createOrder({
         ...orderData,
-        user_id: user.id,
+        user_id: userId,
         foto_moto_url: imageUrl,
       })
 

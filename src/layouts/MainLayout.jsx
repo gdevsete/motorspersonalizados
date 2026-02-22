@@ -3,18 +3,45 @@
  * Layout principal com Header, Footer e WhatsApp button
  */
 
-import { Outlet } from 'react-router-dom'
+import { useEffect } from 'react'
+import { Outlet, useLocation } from 'react-router-dom'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
 import { WhatsAppButton } from '../components/UI'
+import { updatePresence
+ } from '../services/visitorService'
 
 const MainLayout = () => {
+  const location = useLocation()
+
+  // Rastrear visitante (com tratamento de erro silencioso)
+  useEffect(() => {
+    // Atualizar presença quando página mudar (silenciosamente)
+    const trackVisitor = async () => {
+      try {
+        await updatePresence(location.pathname)
+      } catch (err) {
+        // Silenciar erros de rastreamento - não é crítico
+        console.debug('Rastreamento de visitante falhou:', err)
+      }
+    }
+    
+    trackVisitor()
+
+    // Atualizar presença a cada 60 segundos (menos frequente)
+    const interval = setInterval(trackVisitor, 60000)
+
+    return () => {
+      clearInterval(interval)
+    }
+  }, [location.pathname])
+
   return (
     <div className="min-h-screen flex flex-col bg-[#0a0a0a]">
       <Header />
       
       {/* Conteúdo principal com espaço para header fixo */}
-      <main className="flex-1 pt-16 md:pt-20">
+      <main className="flex-1 pt-28 md:pt-32">
         <Outlet />
       </main>
       

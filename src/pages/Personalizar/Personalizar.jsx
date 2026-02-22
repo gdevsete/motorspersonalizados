@@ -3,7 +3,7 @@
  * Formulário de personalização de miniatura com cálculo de preço
  */
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { useOrders } from '../../hooks/useOrders'
@@ -112,6 +112,17 @@ const Personalizar = () => {
   const [cepErro, setCepErro] = useState('')
   const [showModalCadastro, setShowModalCadastro] = useState(false)
   const [cadastroLoading, setCadastroLoading] = useState(false)
+
+  // Preencher dados do usuário logado automaticamente
+  useEffect(() => {
+    if (user) {
+      setFormData(prev => ({
+        ...prev,
+        nome_cliente: user.user_metadata?.nome || prev.nome_cliente,
+        telefone: user.user_metadata?.telefone ? formatarTelefone(user.user_metadata.telefone) : prev.telefone,
+      }))
+    }
+  }, [user])
 
   // Obter frete selecionado
   const freteSelecionado = FRETE_OPTIONS.find(f => f.id === formData.frete_selecionado) || FRETE_OPTIONS[0]
@@ -342,7 +353,7 @@ const Personalizar = () => {
       valor_total: calcularPreco(),
     }
 
-    const { data, error } = await submitOrder(orderData, imageFile)
+    const { data, error } = await submitOrder(orderData, imageFile, userId)
 
     if (error) {
       toast.error('Erro ao criar pedido. Tente novamente.')
@@ -395,12 +406,11 @@ const Personalizar = () => {
         return
       }
 
-      // Conta criada com sucesso
+      // Conta criada com sucesso - finalizar pedido
       if (authData.user) {
-        toast.success('Conta criada com sucesso!')
         setShowModalCadastro(false)
         
-        // Finalizar pedido
+        // Finalizar pedido (vai mostrar toast de sucesso)
         await finalizarPedido(authData.user.id)
       }
     } catch (error) {

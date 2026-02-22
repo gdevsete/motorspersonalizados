@@ -6,22 +6,51 @@
 import { useState } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
-import { FiMenu, FiX, FiUser, FiLogOut } from 'react-icons/fi'
+import { supabase } from '../../lib/supabase'
+import { FiMenu, FiX, FiUser, FiLogOut, FiSettings } from 'react-icons/fi'
+import toast from 'react-hot-toast'
+
+// Email do administrador
+const ADMIN_EMAIL = 'gordao@gmail.com'
 
 const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-  const { user, signOut, isAdmin } = useAuth()
+  const { user } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
+
+  // Verificar se é admin
+  const isAdmin = user?.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase()
 
   // Verificar se link está ativo
   const isActive = (path) => location.pathname === path
 
   // Logout
   const handleLogout = async () => {
-    await signOut()
-    navigate('/')
-    setIsMenuOpen(false)
+    try {
+      // Tentar logout pelo Supabase diretamente
+      const { error } = await supabase.auth.signOut()
+      
+      if (error) {
+        console.error('Erro no logout:', error)
+        toast.error('Erro ao sair. Tente novamente.')
+        return
+      }
+      
+      // Limpar storage local
+      localStorage.removeItem('sb-' + window.location.hostname + '-auth-token')
+      sessionStorage.clear()
+      
+      toast.success('Você saiu da conta')
+      setIsMenuOpen(false)
+      navigate('/')
+      
+      // Forçar reload para limpar estado
+      window.location.reload()
+    } catch (err) {
+      console.error('Erro inesperado no logout:', err)
+      toast.error('Erro ao sair')
+    }
   }
 
   // Links de navegação
@@ -84,13 +113,14 @@ const Header = () => {
                 {isAdmin && (
                   <Link
                     to="/admin"
-                    className={`font-medium transition-colors duration-300
+                    className={`flex items-center gap-2 font-medium transition-colors duration-300
                       ${isActive('/admin') 
                         ? 'text-[#ff1e1e]' 
                         : 'text-gray-300 hover:text-white'
                       }
                     `}
                   >
+                    <FiSettings className="w-4 h-4" />
                     Admin
                   </Link>
                 )}
@@ -165,8 +195,9 @@ const Header = () => {
                     <Link
                       to="/admin"
                       onClick={() => setIsMenuOpen(false)}
-                      className="py-2 text-gray-300 hover:text-white"
+                      className="py-2 flex items-center gap-2 text-gray-300 hover:text-white"
                     >
+                      <FiSettings className="w-4 h-4" />
                       Admin
                     </Link>
                   )}

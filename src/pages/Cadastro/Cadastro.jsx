@@ -48,7 +48,7 @@ const Cadastro = () => {
 
     setLoading(true)
 
-    const { error } = await signUp(formData.email, formData.password, {
+    const { data, error } = await signUp(formData.email, formData.password, {
       nome: formData.nome,
     })
 
@@ -58,8 +58,15 @@ const Cadastro = () => {
       return
     }
 
-    toast.success('Conta criada com sucesso! Verifique seu email.')
-    navigate('/login')
+    // Se o Supabase retornou uma sessão, significa que não precisa confirmar email
+    if (data?.session) {
+      toast.success('Conta criada com sucesso!')
+      navigate('/minha-conta')
+    } else {
+      // Precisa confirmar email
+      toast.success('Conta criada! Verifique seu email para confirmar.')
+      navigate('/login')
+    }
   }
 
   // Requisitos de senha

@@ -5,16 +5,26 @@
 
 import { supabase } from '../lib/supabase'
 
+// Helper para timeout em promises (30 segundos padrão)
+const withTimeout = (promise, ms = 30000) => {
+  const timeout = new Promise((_, reject) => {
+    setTimeout(() => reject(new Error('Tempo limite excedido')), ms)
+  })
+  return Promise.race([promise, timeout])
+}
+
 /**
  * Criar novo pedido
  */
 export const createOrder = async (orderData) => {
   try {
-    const { data, error } = await supabase
-      .from('orders')
-      .insert([orderData])
-      .select()
-      .single()
+    const { data, error } = await withTimeout(
+      supabase
+        .from('orders')
+        .insert([orderData])
+        .select()
+        .single()
+    )
 
     if (error) throw error
     return { data, error: null }
@@ -29,6 +39,7 @@ export const createOrder = async (orderData) => {
  */
 export const getUserOrders = async (userId) => {
   try {
+    // Sem timeout para leitura - deixar o Supabase gerenciar
     const { data, error } = await supabase
       .from('orders')
       .select('*')
@@ -36,10 +47,10 @@ export const getUserOrders = async (userId) => {
       .order('created_at', { ascending: false })
 
     if (error) throw error
-    return { data, error: null }
+    return { data: data || [], error: null }
   } catch (error) {
     console.error('Erro ao buscar pedidos:', error)
-    return { data: null, error }
+    return { data: [], error }
   }
 }
 
@@ -48,16 +59,17 @@ export const getUserOrders = async (userId) => {
  */
 export const getAllOrders = async () => {
   try {
+    // Sem timeout para leitura - deixar o Supabase gerenciar
     const { data, error } = await supabase
       .from('orders')
       .select('*')
       .order('created_at', { ascending: false })
 
     if (error) throw error
-    return { data, error: null }
+    return { data: data || [], error: null }
   } catch (error) {
     console.error('Erro ao buscar todos os pedidos:', error)
-    return { data: null, error }
+    return { data: [], error }
   }
 }
 
@@ -66,12 +78,14 @@ export const getAllOrders = async () => {
  */
 export const updateOrderStatus = async (orderId, status) => {
   try {
-    const { data, error } = await supabase
-      .from('orders')
-      .update({ status })
-      .eq('id', orderId)
-      .select()
-      .single()
+    const { data, error } = await withTimeout(
+      supabase
+        .from('orders')
+        .update({ status })
+        .eq('id', orderId)
+        .select()
+        .single()
+    )
 
     if (error) throw error
     return { data, error: null }
@@ -86,11 +100,13 @@ export const updateOrderStatus = async (orderId, status) => {
  */
 export const getOrderById = async (orderId) => {
   try {
-    const { data, error } = await supabase
-      .from('orders')
-      .select('*')
-      .eq('id', orderId)
-      .single()
+    const { data, error } = await withTimeout(
+      supabase
+        .from('orders')
+        .select('*')
+        .eq('id', orderId)
+        .single()
+    )
 
     if (error) throw error
     return { data, error: null }
@@ -108,12 +124,15 @@ export const uploadMotoImage = async (file, userId) => {
     const fileExt = file.name.split('.').pop()
     const fileName = `${userId}/${Date.now()}.${fileExt}`
     
-    const { data, error } = await supabase.storage
-      .from('moto-images')
-      .upload(fileName, file, {
-        cacheControl: '3600',
-        upsert: false,
-      })
+    const { data, error } = await withTimeout(
+      supabase.storage
+        .from('moto-images')
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: false,
+        }),
+      30000 // 30s para upload
+    )
 
     if (error) throw error
 

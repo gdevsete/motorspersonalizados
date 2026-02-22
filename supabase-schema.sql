@@ -189,6 +189,159 @@ INSERT INTO testimonials (nome, cidade, comentario, nota) VALUES
   ('Ricardo S.', 'Curitiba, PR', 'Atendimento nota 10 e produto de altíssima qualidade. Já encomendei o segundo!', 5);
 
 -- ============================================
+-- TABELA: visitors (Visitantes Online)
+-- ============================================
+CREATE TABLE IF NOT EXISTS visitors (
+  id UUID PRIMARY KEY,
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  user_email TEXT,
+  user_name TEXT,
+  current_page TEXT DEFAULT '/',
+  last_seen TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  user_agent TEXT,
+  is_authenticated BOOLEAN DEFAULT false,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Habilitar RLS para visitors
+ALTER TABLE visitors ENABLE ROW LEVEL SECURITY;
+
+-- Políticas para visitors
+-- Qualquer um pode inserir/atualizar sua presença
+CREATE POLICY "Anyone can insert visitor" ON visitors
+  FOR INSERT WITH CHECK (true);
+
+CREATE POLICY "Anyone can update own visitor" ON visitors
+  FOR UPDATE USING (true);
+
+CREATE POLICY "Anyone can delete own visitor" ON visitors
+  FOR DELETE USING (true);
+
+-- Apenas admins podem ver todos os visitantes
+CREATE POLICY "Authenticated can view visitors" ON visitors
+  FOR SELECT USING (auth.role() = 'authenticated');
+
+-- Índices para visitors
+CREATE INDEX IF NOT EXISTS idx_visitors_last_seen ON visitors(last_seen DESC);
+CREATE INDEX IF NOT EXISTS idx_visitors_user_id ON visitors(user_id);
+
+-- ============================================
+-- FUNÇÕES PARA ADMIN (Gerenciamento de Usuários)
+-- ============================================
+
+-- Função para buscar todos os usuários (admin)
+CREATE OR REPLACE FUNCTION get_all_users()
+RETURNS TABLE (
+  id UUID,
+  email TEXT,
+  created_at TIMESTAMPTZ,
+  last_sign_in_at TIMESTAMPTZ,
+  raw_user_meta_data JSONB,
+  email_confirmed_at TIMESTAMPTZ
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  -- Verificar se usuário está autenticado
+  IF auth.role() != 'authenticated' THEN
+    RAISE EXCEPTION 'Acesso negado';
+  END IF;
+
+  RETURN QUERY
+  SELECT 
+    u.id,
+    u.email::TEXT,
+    u.created_at,
+    u.last_sign_in_at,
+    u.raw_user_meta_data,
+    u.email_confirmed_at
+  FROM auth.users u
+  ORDER BY u.created_at DESC;
+END;
+$$;
+
+-- Função para buscar detalhes de um usuário
+CREATE OR REPLACE FUNCTION get_user_details(user_id UUID)
+RETURNS TABLE (
+  id UUID,
+  email TEXT,
+  created_at TIMESTAMPTZ,
+  last_sign_in_at TIMESTAMPTZ,
+  raw_user_meta_data JSONB,
+  email_confirmed_at TIMESTAMPTZ,
+  total_orders BIGINT,
+  total_spent NUMERIC
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  IF auth.role() != 'authenticated' THEN
+    RAISE EXCEPTION 'Acesso negado';
+  END IF;
+
+  RETURN QUERY
+  SELECT 
+    u.id,
+    u.email::TEXT,
+    u.created_at,
+    u.last_sign_in_at,
+    u.raw_user_meta_data,
+    u.email_confirmed_at,
+    COALESCE(COUNT(o.id), 0)::BIGINT as total_orders,
+    COALESCE(SUM(o.valor_total), 0)::NUMERIC as total_spent
+  FROM auth.users u
+  LEFT JOIN orders o ON o.user_id = u.id
+  WHERE u.id = user_id
+  GROUP BY u.id, u.email, u.created_at, u.last_sign_in_at, u.raw_user_meta_data, u.email_confirmed_at;
+END;
+$$;
+
+-- Função para deletar usuário (admin)
+CREATE OR REPLACE FUNCTION delete_user(user_id UUID)
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+  IF auth.role() != 'authenticated' THEN
+    RAISE EXCEPTION 'Acesso negado';
+  END IF;
+
+  -- Deletar pedidos do usuário primeiro
+  DELETE FROM orders WHERE orders.user_id = delete_user.user_id;
+  
+  -- Deletar o usuário da auth.users
+  DELETE FROM auth.users WHERE auth.users.id = delete_user.user_id;
+  
+  RETURN TRUE;
+END;
+$$;
+
+-- Função para contar usuários
+CREATE OR REPLACE FUNCTION get_users_count()
+RETURNS BIGINT
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  user_count BIGINT;
+BEGIN
+  IF auth.role() != 'authenticated' THEN
+    RAISE EXCEPTION 'Acesso negado';
+  END IF;
+
+  SELECT COUNT(*) INTO user_count FROM auth.users;
+  RETURN user_count;
+END;
+$$;
+
+-- ============================================
 -- FIM DO SCRIPT DE CRIAÇÃO
 -- ============================================
 

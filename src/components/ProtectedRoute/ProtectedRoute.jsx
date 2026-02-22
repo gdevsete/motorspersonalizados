@@ -7,8 +7,8 @@ import { Navigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { LoadingSpinner } from '../UI'
 
-const ProtectedRoute = ({ children, requireAdmin = false }) => {
-  const { user, loading, isAdmin } = useAuth()
+const ProtectedRoute = ({ children }) => {
+  const { user, loading } = useAuth()
   const location = useLocation()
 
   // Mostrar loading enquanto verifica autenticação
@@ -23,11 +23,6 @@ const ProtectedRoute = ({ children, requireAdmin = false }) => {
   // Redirecionar para login se não autenticado
   if (!user) {
     return <Navigate to="/login" state={{ from: location }} replace />
-  }
-
-  // Verificar permissão de admin
-  if (requireAdmin && !isAdmin) {
-    return <Navigate to="/" replace />
   }
 
   return children
