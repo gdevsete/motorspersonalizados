@@ -92,14 +92,32 @@ export const sendMessage = async (conversationId, content, isFromUser = true) =>
     if (error) throw error
 
     // Atualizar última mensagem da conversa
-    await supabase
-      .from('chat_conversations')
-      .update({ 
-        last_message: content,
-        last_message_at: new Date().toISOString(),
-        unread_count: isFromUser ? supabase.raw('unread_count + 1') : 0
-      })
-      .eq('id', conversationId)
+    // Primeiro buscar o count atual se for do usuário
+    if (isFromUser) {
+      const { data: convData } = await supabase
+        .from('chat_conversations')
+        .select('unread_count')
+        .eq('id', conversationId)
+        .single()
+      
+      await supabase
+        .from('chat_conversations')
+        .update({ 
+          last_message: content,
+          last_message_at: new Date().toISOString(),
+          unread_count: (convData?.unread_count || 0) + 1
+        })
+        .eq('id', conversationId)
+    } else {
+      await supabase
+        .from('chat_conversations')
+        .update({ 
+          last_message: content,
+          last_message_at: new Date().toISOString(),
+          unread_count: 0
+        })
+        .eq('id', conversationId)
+    }
 
     return data
   } catch (error) {

@@ -157,13 +157,33 @@ const ChatWidget = () => {
       ))
     } catch (error) {
       console.error('Erro ao enviar:', error)
-      // Marcar como erro
+      // Marcar como erro e permitir reenvio
       setMessages(prev => prev.map(m => 
-        m.id === tempMsg.id ? { ...m, error: true, sending: false } : m
+        m.id === tempMsg.id ? { ...m, error: true, sending: false, content } : m
       ))
-      setNewMessage(content)
+      // Não restaurar o texto automaticamente - deixar o usuário decidir
     } finally {
       setSending(false)
+    }
+  }
+
+  // Reenviar mensagem com erro
+  const handleRetry = async (msgId, content) => {
+    // Marcar como enviando novamente
+    setMessages(prev => prev.map(m => 
+      m.id === msgId ? { ...m, error: false, sending: true } : m
+    ))
+
+    try {
+      const sentMsg = await sendMessage(conversation.id, content, true)
+      setMessages(prev => prev.map(m => 
+        m.id === msgId ? { ...sentMsg, sending: false } : m
+      ))
+    } catch (error) {
+      console.error('Erro ao reenviar:', error)
+      setMessages(prev => prev.map(m => 
+        m.id === msgId ? { ...m, error: true, sending: false } : m
+      ))
     }
   }
 
@@ -362,7 +382,12 @@ const ChatWidget = () => {
                                 {msg.sending ? (
                                   <div className="w-3 h-3 border border-gray-400 border-t-transparent rounded-full animate-spin"></div>
                                 ) : msg.error ? (
-                                  <span className="text-[10px] text-red-400">Erro ao enviar</span>
+                                  <button 
+                                    onClick={() => handleRetry(msg.id, msg.content)}
+                                    className="text-[10px] text-red-400 hover:text-red-300 underline"
+                                  >
+                                    Erro - Toque para reenviar
+                                  </button>
                                 ) : (
                                   <FiCheck className="w-3 h-3 text-green-400" />
                                 )}
