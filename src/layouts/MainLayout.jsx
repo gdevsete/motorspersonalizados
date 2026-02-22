@@ -1,15 +1,14 @@
 /**
  * MainLayout Component
- * Layout principal com Header, Footer e WhatsApp button
+ * Layout principal com Header, Footer e Chat de suporte
  */
 
 import { useEffect } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
-import { WhatsAppButton } from '../components/UI'
-import { updatePresence
- } from '../services/visitorService'
+import ChatWidget from '../components/ChatWidget'
+import { updatePresence } from '../services/visitorService'
 
 const MainLayout = () => {
   const location = useLocation()
@@ -46,7 +45,7 @@ const MainLayout = () => {
       </main>
       
       <Footer />
-      <WhatsAppButton />
+      <ChatWidget />
     </div>
   )
 }

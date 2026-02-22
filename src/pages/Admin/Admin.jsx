@@ -12,9 +12,17 @@ import { formatCurrency, formatDate, STATUS_LABELS, STATUS_COLORS, ORDER_STATUS 
 import { 
   FiPackage, FiUsers, FiActivity, FiEye, FiTrash2, 
   FiRefreshCw, FiCalendar, FiX,
-  FiUser, FiMapPin, FiImage
+  FiUser, FiMapPin, FiImage, FiMessageCircle, FiSend
 } from 'react-icons/fi'
 import toast from 'react-hot-toast'
+import {
+  getAllConversations,
+  getMessages,
+  sendMessage,
+  markAsRead,
+  closeConversation,
+  subscribeToConversations
+} from '../../services/chatService'
 
 // Email do administrador
 const ADMIN_EMAIL = 'gordao@gmail.com'
@@ -32,6 +40,14 @@ const Admin = () => {
   const [loadingOrders, setLoadingOrders] = useState(true)
   const [loadingUsers, setLoadingUsers] = useState(true)
   const [loadingVisitors, setLoadingVisitors] = useState(true)
+  
+  // Chat states
+  const [conversations, setConversations] = useState([])
+  const [selectedConversation, setSelectedConversation] = useState(null)
+  const [chatMessages, setChatMessages] = useState([])
+  const [newReply, setNewReply] = useState('')
+  const [loadingChat, setLoadingChat] = useState(true)
+  const [sendingReply, setSendingReply] = useState(false)
   
   // Modal de pedido
   const [selectedOrder, setSelectedOrder] = useState(null)
@@ -136,6 +152,71 @@ const Admin = () => {
     }
   }
 
+  // Carregar conversas de chat
+  const loadConversations = async () => {
+    setLoadingChat(true)
+    try {
+      const data = await getAllConversations()
+      setConversations(data || [])
+    } catch (error) {
+      console.error('Erro ao carregar conversas:', error)
+      setConversations([])
+    } finally {
+      setLoadingChat(false)
+    }
+  }
+
+  // Selecionar conversa
+  const handleSelectConversation = async (conv) => {
+    setSelectedConversation(conv)
+    try {
+      const msgs = await getMessages(conv.id)
+      setChatMessages(msgs)
+      await markAsRead(conv.id)
+      // Atualizar lista de conversas
+      setConversations(prev => 
+        prev.map(c => c.id === conv.id ? { ...c, unread_count: 0 } : c)
+      )
+    } catch (error) {
+      console.error('Erro ao carregar mensagens:', error)
+    }
+  }
+
+  // Enviar resposta
+  const handleSendReply = async (e) => {
+    e.preventDefault()
+    if (!newReply.trim() || !selectedConversation || sendingReply) return
+
+    setSendingReply(true)
+    try {
+      const msg = await sendMessage(selectedConversation.id, newReply.trim(), false)
+      setChatMessages(prev => [...prev, msg])
+      setNewReply('')
+      toast.success('Resposta enviada!')
+    } catch (error) {
+      console.error('Erro ao enviar:', error)
+      toast.error('Erro ao enviar resposta')
+    } finally {
+      setSendingReply(false)
+    }
+  }
+
+  // Fechar conversa
+  const handleCloseConversation = async (convId) => {
+    if (!confirm('Fechar esta conversa?')) return
+    try {
+      await closeConversation(convId)
+      loadConversations()
+      if (selectedConversation?.id === convId) {
+        setSelectedConversation(null)
+        setChatMessages([])
+      }
+      toast.success('Conversa fechada')
+    } catch (error) {
+      toast.error('Erro ao fechar conversa')
+    }
+  }
+
   // Atualizar status do pedido
   const handleStatusChange = async (orderId, newStatus) => {
     try {
@@ -229,10 +310,20 @@ const Admin = () => {
       loadOrders()
       loadUsers()
       loadVisitors()
+      loadConversations()
       
       // Atualizar visitantes a cada 30 segundos
-      const interval = setInterval(loadVisitors, 30000)
-      return () => clearInterval(interval)
+      const visitorInterval = setInterval(loadVisitors, 30000)
+      
+      // Subscrever a novas conversas em tempo real
+      const unsubscribeChat = subscribeToConversations(() => {
+        loadConversations()
+      })
+      
+      return () => {
+        clearInterval(visitorInterval)
+        unsubscribeChat()
+      }
     }
   }, [isAdmin])
 
@@ -272,6 +363,7 @@ const Admin = () => {
               loadOrders()
               loadUsers()
               loadVisitors()
+              loadConversations()
               toast.success('Dados atualizados!')
             }}
             className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#1a1a1a] text-gray-400 hover:text-white transition-all"
@@ -470,6 +562,155 @@ const Admin = () => {
                     </div>
                   </div>
                 ))}
+              </div>
+            )}
+          </div>
+
+          {/* Card: Chat de Suporte */}
+          <div className="card">
+            <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+              <FiMessageCircle className="text-[#ff1e1e]" />
+              Chat de Suporte ({conversations.filter(c => c.status === 'active').length})
+              {conversations.reduce((acc, c) => acc + (c.unread_count || 0), 0) > 0 && (
+                <span className="px-2 py-1 bg-red-500 text-white text-xs rounded-full ml-2">
+                  {conversations.reduce((acc, c) => acc + (c.unread_count || 0), 0)} novas
+                </span>
+              )}
+            </h2>
+
+            {loadingChat ? (
+              <div className="flex justify-center py-12">
+                <LoadingSpinner size="lg" />
+              </div>
+            ) : conversations.length === 0 ? (
+              <div className="text-center py-12 text-gray-400">
+                <FiMessageCircle className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                <p>Nenhuma conversa de suporte</p>
+                <p className="text-sm mt-2">As mensagens dos clientes aparecerão aqui</p>
+              </div>
+            ) : (
+              <div className="grid md:grid-cols-2 gap-4">
+                {/* Lista de conversas */}
+                <div className="space-y-2 max-h-[400px] overflow-y-auto">
+                  {conversations.map(conv => (
+                    <div
+                      key={conv.id}
+                      onClick={() => handleSelectConversation(conv)}
+                      className={`p-4 rounded-lg cursor-pointer transition-all ${
+                        selectedConversation?.id === conv.id
+                          ? 'bg-[#ff1e1e]/20 border border-[#ff1e1e]'
+                          : 'bg-[#1a1a1a] hover:bg-[#2a2a2a]'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between mb-1">
+                        <div className="flex items-center gap-2">
+                          <FiUser className="w-4 h-4 text-gray-400" />
+                          <span className="font-medium text-sm">
+                            {conv.user_name || conv.user_email || conv.guest_id?.slice(0, 15) || 'Visitante'}
+                          </span>
+                        </div>
+                        {conv.unread_count > 0 && (
+                          <span className="w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                            {conv.unread_count}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-400 truncate">
+                        {conv.last_message || 'Sem mensagens'}
+                      </p>
+                      <div className="flex items-center justify-between mt-2">
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${
+                          conv.status === 'active' ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'
+                        }`}>
+                          {conv.status === 'active' ? 'Ativo' : 'Fechado'}
+                        </span>
+                        {conv.last_message_at && (
+                          <span className="text-xs text-gray-500">
+                            {new Date(conv.last_message_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Chat ativo */}
+                <div className="bg-[#1a1a1a] rounded-lg flex flex-col h-[400px]">
+                  {selectedConversation ? (
+                    <>
+                      {/* Header do chat */}
+                      <div className="p-3 border-b border-[#2a2a2a] flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <FiUser className="w-4 h-4 text-[#ff1e1e]" />
+                          <span className="font-medium text-sm">
+                            {selectedConversation.user_name || selectedConversation.user_email || 'Visitante'}
+                          </span>
+                        </div>
+                        <button
+                          onClick={() => handleCloseConversation(selectedConversation.id)}
+                          className="text-xs px-3 py-1 bg-gray-600 hover:bg-red-600 rounded transition-colors"
+                        >
+                          Fechar
+                        </button>
+                      </div>
+
+                      {/* Mensagens */}
+                      <div className="flex-1 overflow-y-auto p-3 space-y-3">
+                        {chatMessages.map((msg, index) => (
+                          <div
+                            key={msg.id || index}
+                            className={`flex ${msg.is_from_user ? 'justify-start' : 'justify-end'}`}
+                          >
+                            <div
+                              className={`max-w-[80%] rounded-lg px-3 py-2 text-sm ${
+                                msg.is_from_user
+                                  ? 'bg-[#2a2a2a] text-white'
+                                  : 'bg-[#ff1e1e] text-white'
+                              }`}
+                            >
+                              <p>{msg.content}</p>
+                              <span className="text-xs opacity-60 mt-1 block">
+                                {new Date(msg.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                              </span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Input de resposta */}
+                      <form onSubmit={handleSendReply} className="p-3 border-t border-[#2a2a2a]">
+                        <div className="flex gap-2">
+                          <input
+                            type="text"
+                            value={newReply}
+                            onChange={(e) => setNewReply(e.target.value)}
+                            placeholder="Digite sua resposta..."
+                            className="flex-1 bg-[#2a2a2a] border-0 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#ff1e1e]"
+                            disabled={sendingReply}
+                          />
+                          <button
+                            type="submit"
+                            disabled={!newReply.trim() || sendingReply}
+                            className="w-10 h-10 bg-[#ff1e1e] rounded-lg flex items-center justify-center hover:bg-[#ff3333] transition-colors disabled:opacity-50"
+                          >
+                            {sendingReply ? (
+                              <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div>
+                            ) : (
+                              <FiSend className="w-4 h-4 text-white" />
+                            )}
+                          </button>
+                        </div>
+                      </form>
+                    </>
+                  ) : (
+                    <div className="flex-1 flex items-center justify-center text-gray-400 text-sm">
+                      <div className="text-center">
+                        <FiMessageCircle className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                        <p>Selecione uma conversa</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
           </div>

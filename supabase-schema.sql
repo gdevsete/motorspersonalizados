@@ -342,6 +342,86 @@ END;
 $$;
 
 -- ============================================
+-- TABELAS DE CHAT DE SUPORTE
+-- ============================================
+
+-- Tabela de conversas
+CREATE TABLE IF NOT EXISTS chat_conversations (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+  user_email TEXT,
+  user_name TEXT,
+  guest_id TEXT,
+  status TEXT DEFAULT 'active' CHECK (status IN ('active', 'closed')),
+  last_message TEXT,
+  last_message_at TIMESTAMP WITH TIME ZONE,
+  unread_count INTEGER DEFAULT 0,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Tabela de mensagens
+CREATE TABLE IF NOT EXISTS chat_messages (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  conversation_id UUID REFERENCES chat_conversations(id) ON DELETE CASCADE,
+  content TEXT NOT NULL,
+  is_from_user BOOLEAN DEFAULT true,
+  read BOOLEAN DEFAULT false,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Índices para performance
+CREATE INDEX IF NOT EXISTS idx_chat_conversations_user_id ON chat_conversations(user_id);
+CREATE INDEX IF NOT EXISTS idx_chat_conversations_guest_id ON chat_conversations(guest_id);
+CREATE INDEX IF NOT EXISTS idx_chat_conversations_status ON chat_conversations(status);
+CREATE INDEX IF NOT EXISTS idx_chat_messages_conversation_id ON chat_messages(conversation_id);
+CREATE INDEX IF NOT EXISTS idx_chat_messages_created_at ON chat_messages(created_at);
+
+-- RLS para chat_conversations
+ALTER TABLE chat_conversations ENABLE ROW LEVEL SECURITY;
+
+-- Usuários podem ver suas próprias conversas
+CREATE POLICY "Users can view own conversations" ON chat_conversations
+  FOR SELECT USING (
+    auth.uid() = user_id 
+    OR guest_id IS NOT NULL
+    OR EXISTS (SELECT 1 FROM auth.users WHERE auth.uid() = id AND email = 'gordao@gmail.com')
+  );
+
+-- Usuários podem criar conversas
+CREATE POLICY "Users can create conversations" ON chat_conversations
+  FOR INSERT WITH CHECK (true);
+
+-- Admin pode atualizar qualquer conversa
+CREATE POLICY "Admin can update conversations" ON chat_conversations
+  FOR UPDATE USING (
+    EXISTS (SELECT 1 FROM auth.users WHERE auth.uid() = id AND email = 'gordao@gmail.com')
+    OR auth.uid() = user_id
+  );
+
+-- RLS para chat_messages
+ALTER TABLE chat_messages ENABLE ROW LEVEL SECURITY;
+
+-- Qualquer um pode ver mensagens de conversas que pode acessar
+CREATE POLICY "Users can view messages" ON chat_messages
+  FOR SELECT USING (
+    EXISTS (
+      SELECT 1 FROM chat_conversations c 
+      WHERE c.id = conversation_id 
+      AND (c.user_id = auth.uid() OR c.guest_id IS NOT NULL 
+           OR EXISTS (SELECT 1 FROM auth.users WHERE auth.uid() = id AND email = 'gordao@gmail.com'))
+    )
+  );
+
+-- Qualquer um pode inserir mensagens
+CREATE POLICY "Users can send messages" ON chat_messages
+  FOR INSERT WITH CHECK (true);
+
+-- Habilitar realtime para chat
+ALTER PUBLICATION supabase_realtime ADD TABLE chat_conversations;
+ALTER PUBLICATION supabase_realtime ADD TABLE chat_messages;
+
+-- ============================================
 -- FIM DO SCRIPT DE CRIAÇÃO
 -- ============================================
 
