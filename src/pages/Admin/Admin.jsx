@@ -3,7 +3,7 @@
  * Gerencia pedidos, clientes e visitantes online
  */
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { Navigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { supabase } from '../../lib/supabase'
@@ -12,7 +12,7 @@ import { formatCurrency, formatDate, STATUS_LABELS, STATUS_COLORS, ORDER_STATUS 
 import { 
   FiPackage, FiUsers, FiActivity, FiEye, FiTrash2, 
   FiRefreshCw, FiCalendar, FiX,
-  FiUser, FiMapPin, FiImage, FiMessageCircle, FiSend
+  FiUser, FiMapPin, FiImage, FiMessageCircle, FiSend, FiCheck
 } from 'react-icons/fi'
 import toast from 'react-hot-toast'
 import {
@@ -48,6 +48,9 @@ const Admin = () => {
   const [newReply, setNewReply] = useState('')
   const [loadingChat, setLoadingChat] = useState(true)
   const [sendingReply, setSendingReply] = useState(false)
+  const [userTyping, setUserTyping] = useState(false)
+  const typingTimeoutRef = useRef(null)
+  const messagesEndRef = useRef(null)
   
   // Modal de pedido
   const [selectedOrder, setSelectedOrder] = useState(null)
@@ -169,6 +172,7 @@ const Admin = () => {
   // Selecionar conversa
   const handleSelectConversation = async (conv) => {
     setSelectedConversation(conv)
+    setUserTyping(false)
     try {
       const msgs = await getMessages(conv.id)
       setChatMessages(msgs)
@@ -177,10 +181,45 @@ const Admin = () => {
       setConversations(prev => 
         prev.map(c => c.id === conv.id ? { ...c, unread_count: 0 } : c)
       )
+      // Scroll para última mensagem
+      setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100)
     } catch (error) {
       console.error('Erro ao carregar mensagens:', error)
     }
   }
+
+  // Enviar status de digitação do admin
+  const handleAdminTyping = useCallback(() => {
+    if (!selectedConversation) return
+    
+    supabase.channel(`typing:${selectedConversation.id}`).send({
+      type: 'broadcast',
+      event: 'typing',
+      payload: { is_admin: true, is_typing: true }
+    })
+  }, [selectedConversation])
+
+  // Subscrever ao canal de digitação quando conversa é selecionada
+  useEffect(() => {
+    if (!selectedConversation) return
+
+    const typingChannel = supabase
+      .channel(`typing:${selectedConversation.id}`)
+      .on('broadcast', { event: 'typing' }, ({ payload }) => {
+        if (!payload.is_admin) {
+          setUserTyping(true)
+          // Limpar após 3 segundos
+          if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current)
+          typingTimeoutRef.current = setTimeout(() => setUserTyping(false), 3000)
+        }
+      })
+      .subscribe()
+
+    return () => {
+      typingChannel.unsubscribe()
+      if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current)
+    }
+  }, [selectedConversation])
 
   // Enviar resposta
   const handleSendReply = async (e) => {
@@ -192,7 +231,8 @@ const Admin = () => {
       const msg = await sendMessage(selectedConversation.id, newReply.trim(), false)
       setChatMessages(prev => [...prev, msg])
       setNewReply('')
-      toast.success('Resposta enviada!')
+      // Scroll para última mensagem
+      setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100)
     } catch (error) {
       console.error('Erro ao enviar:', error)
       toast.error('Erro ao enviar resposta')
@@ -584,48 +624,69 @@ const Admin = () => {
               </div>
             ) : conversations.length === 0 ? (
               <div className="text-center py-12 text-gray-400">
-                <FiMessageCircle className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p>Nenhuma conversa de suporte</p>
-                <p className="text-sm mt-2">As mensagens dos clientes aparecerão aqui</p>
+                <div className="w-20 h-20 bg-gradient-to-br from-[#1a1a1a] to-[#2a2a2a] rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
+                  <FiMessageCircle className="w-10 h-10 text-gray-500" />
+                </div>
+                <p className="font-medium">Nenhuma conversa de suporte</p>
+                <p className="text-sm mt-2 text-gray-500">As mensagens dos clientes aparecerão aqui em tempo real</p>
               </div>
             ) : (
-              <div className="grid md:grid-cols-2 gap-4">
+              <div className="grid md:grid-cols-2 gap-6">
                 {/* Lista de conversas */}
-                <div className="space-y-2 max-h-[400px] overflow-y-auto">
+                <div className="space-y-3 max-h-[500px] overflow-y-auto pr-2 scrollbar-thin">
+                  <p className="text-xs text-gray-500 font-medium uppercase tracking-wider mb-3 px-1">
+                    Conversas ({conversations.length})
+                  </p>
                   {conversations.map(conv => (
                     <div
                       key={conv.id}
                       onClick={() => handleSelectConversation(conv)}
-                      className={`p-4 rounded-lg cursor-pointer transition-all ${
+                      className={`p-4 rounded-xl cursor-pointer transition-all border ${
                         selectedConversation?.id === conv.id
-                          ? 'bg-[#ff1e1e]/20 border border-[#ff1e1e]'
-                          : 'bg-[#1a1a1a] hover:bg-[#2a2a2a]'
+                          ? 'bg-gradient-to-r from-[#ff1e1e]/20 to-[#cc0000]/10 border-[#ff1e1e] shadow-lg shadow-[#ff1e1e]/10'
+                          : 'bg-[#1a1a1a] hover:bg-[#2a2a2a] border-[#2a2a2a] hover:border-[#ff1e1e]/30'
                       }`}
                     >
-                      <div className="flex items-center justify-between mb-1">
-                        <div className="flex items-center gap-2">
-                          <FiUser className="w-4 h-4 text-gray-400" />
-                          <span className="font-medium text-sm">
-                            {conv.user_name || conv.user_email || conv.guest_id?.slice(0, 15) || 'Visitante'}
-                          </span>
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-3">
+                          <div className="relative">
+                            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
+                              conv.user_id ? 'bg-gradient-to-br from-[#ff1e1e] to-[#cc0000]' : 'bg-gradient-to-br from-[#2a2a2a] to-[#3a3a3a]'
+                            }`}>
+                              <FiUser className={`w-5 h-5 ${conv.user_id ? 'text-white' : 'text-gray-400'}`} />
+                            </div>
+                            {conv.status === 'active' && (
+                              <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-400 rounded-full border-2 border-[#1a1a1a]"></span>
+                            )}
+                          </div>
+                          <div>
+                            <span className="font-bold text-sm text-white block">
+                              {conv.user_name || conv.user_email?.split('@')[0] || 'Visitante'}
+                            </span>
+                            <span className="text-[10px] text-gray-500">
+                              {conv.user_id ? 'Usuário cadastrado' : 'Visitante anônimo'}
+                            </span>
+                          </div>
                         </div>
                         {conv.unread_count > 0 && (
-                          <span className="w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                          <span className="w-6 h-6 bg-gradient-to-br from-[#ff1e1e] to-[#cc0000] text-white text-xs rounded-full flex items-center justify-center font-bold shadow-lg animate-pulse">
                             {conv.unread_count}
                           </span>
                         )}
                       </div>
-                      <p className="text-xs text-gray-400 truncate">
-                        {conv.last_message || 'Sem mensagens'}
+                      <p className="text-sm text-gray-300 truncate pl-13 mb-2">
+                        {conv.last_message || 'Nova conversa'}
                       </p>
-                      <div className="flex items-center justify-between mt-2">
-                        <span className={`text-xs px-2 py-0.5 rounded-full ${
-                          conv.status === 'active' ? 'bg-green-500/20 text-green-400' : 'bg-gray-500/20 text-gray-400'
+                      <div className="flex items-center justify-between">
+                        <span className={`text-[10px] px-2.5 py-1 rounded-full font-medium ${
+                          conv.status === 'active' 
+                            ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
+                            : 'bg-gray-500/20 text-gray-400 border border-gray-500/30'
                         }`}>
-                          {conv.status === 'active' ? 'Ativo' : 'Fechado'}
+                          {conv.status === 'active' ? '● Ativo' : '○ Fechado'}
                         </span>
                         {conv.last_message_at && (
-                          <span className="text-xs text-gray-500">
+                          <span className="text-[10px] text-gray-500">
                             {new Date(conv.last_message_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
                           </span>
                         )}
@@ -635,78 +696,151 @@ const Admin = () => {
                 </div>
 
                 {/* Chat ativo */}
-                <div className="bg-[#1a1a1a] rounded-lg flex flex-col h-[400px]">
+                <div className="bg-[#0a0a0a] rounded-xl flex flex-col h-[500px] border border-[#2a2a2a]">
                   {selectedConversation ? (
                     <>
                       {/* Header do chat */}
-                      <div className="p-3 border-b border-[#2a2a2a] flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <FiUser className="w-4 h-4 text-[#ff1e1e]" />
-                          <span className="font-medium text-sm">
-                            {selectedConversation.user_name || selectedConversation.user_email || 'Visitante'}
-                          </span>
+                      <div className="p-4 border-b border-[#2a2a2a] bg-gradient-to-r from-[#1a1a1a] to-[#0a0a0a] rounded-t-xl">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div className="relative">
+                              <div className="w-10 h-10 bg-gradient-to-br from-[#2a2a2a] to-[#3a3a3a] rounded-full flex items-center justify-center">
+                                <FiUser className="w-5 h-5 text-gray-400" />
+                              </div>
+                              <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-400 rounded-full border-2 border-[#0a0a0a]"></span>
+                            </div>
+                            <div>
+                              <span className="font-bold text-white">
+                                {selectedConversation.user_name || selectedConversation.user_email || 'Visitante'}
+                              </span>
+                              <p className="text-xs text-gray-400">
+                                {selectedConversation.user_email || selectedConversation.guest_id?.slice(0, 20) || 'Anônimo'}
+                              </p>
+                            </div>
+                          </div>
+                          <button
+                            onClick={() => handleCloseConversation(selectedConversation.id)}
+                            className="text-xs px-4 py-2 bg-gray-700 hover:bg-red-600 rounded-lg transition-colors font-medium"
+                          >
+                            Fechar Conversa
+                          </button>
                         </div>
-                        <button
-                          onClick={() => handleCloseConversation(selectedConversation.id)}
-                          className="text-xs px-3 py-1 bg-gray-600 hover:bg-red-600 rounded transition-colors"
-                        >
-                          Fechar
-                        </button>
                       </div>
 
                       {/* Mensagens */}
-                      <div className="flex-1 overflow-y-auto p-3 space-y-3">
-                        {chatMessages.map((msg, index) => (
-                          <div
-                            key={msg.id || index}
-                            className={`flex ${msg.is_from_user ? 'justify-start' : 'justify-end'}`}
-                          >
-                            <div
-                              className={`max-w-[80%] rounded-lg px-3 py-2 text-sm ${
-                                msg.is_from_user
-                                  ? 'bg-[#2a2a2a] text-white'
-                                  : 'bg-[#ff1e1e] text-white'
-                              }`}
-                            >
-                              <p>{msg.content}</p>
-                              <span className="text-xs opacity-60 mt-1 block">
-                                {new Date(msg.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                              </span>
-                            </div>
+                      <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-gradient-to-b from-[#0a0a0a] to-[#111111]">
+                        {chatMessages.length === 0 ? (
+                          <div className="flex items-center justify-center h-full text-gray-500 text-sm">
+                            Nenhuma mensagem ainda
                           </div>
-                        ))}
+                        ) : (
+                          <>
+                            {chatMessages.map((msg, index) => (
+                              <div
+                                key={msg.id || index}
+                                className={`flex ${msg.is_from_user ? 'justify-start' : 'justify-end'} animate-fadeIn`}
+                              >
+                                {/* Avatar do usuário (esquerda) */}
+                                {msg.is_from_user && (
+                                  <div className="w-8 h-8 bg-gradient-to-br from-[#2a2a2a] to-[#3a3a3a] rounded-full flex items-center justify-center mr-2 flex-shrink-0">
+                                    <FiUser className="w-4 h-4 text-gray-400" />
+                                  </div>
+                                )}
+
+                                <div className={`max-w-[75%]`}>
+                                  <div
+                                    className={`rounded-2xl px-4 py-3 shadow-md ${
+                                      msg.is_from_user
+                                        ? 'bg-[#1a1a1a] text-white rounded-bl-md border border-[#2a2a2a]'
+                                        : 'bg-gradient-to-br from-[#ff1e1e] to-[#cc0000] text-white rounded-br-md'
+                                    }`}
+                                  >
+                                    <p className="text-sm leading-relaxed">{msg.content}</p>
+                                  </div>
+                                  <div className={`flex items-center gap-1.5 mt-1 ${msg.is_from_user ? 'justify-start' : 'justify-end'}`}>
+                                    <span className="text-[10px] text-gray-500">
+                                      {new Date(msg.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                                    </span>
+                                    {!msg.is_from_user && (
+                                      <FiCheck className="w-3 h-3 text-green-400" />
+                                    )}
+                                  </div>
+                                </div>
+
+                                {/* Avatar admin (direita) */}
+                                {!msg.is_from_user && (
+                                  <div className="w-8 h-8 bg-gradient-to-br from-[#ff1e1e] to-[#cc0000] rounded-full flex items-center justify-center ml-2 flex-shrink-0">
+                                    <span className="text-xs font-bold text-white">A</span>
+                                  </div>
+                                )}
+                              </div>
+                            ))}
+                            
+                            {/* Indicador de digitação do usuário */}
+                            {userTyping && (
+                              <div className="flex items-center gap-2 animate-fadeIn">
+                                <div className="w-8 h-8 bg-gradient-to-br from-[#2a2a2a] to-[#3a3a3a] rounded-full flex items-center justify-center">
+                                  <FiUser className="w-4 h-4 text-gray-400" />
+                                </div>
+                                <div className="bg-[#1a1a1a] rounded-2xl rounded-bl-md px-4 py-3 border border-[#2a2a2a]">
+                                  <div className="flex gap-1">
+                                    <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                                    <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                                    <span className="w-2 h-2 bg-gray-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+                                  </div>
+                                </div>
+                                <span className="text-xs text-gray-500">Cliente digitando...</span>
+                              </div>
+                            )}
+                            
+                            <div ref={messagesEndRef} />
+                          </>
+                        )}
                       </div>
 
                       {/* Input de resposta */}
-                      <form onSubmit={handleSendReply} className="p-3 border-t border-[#2a2a2a]">
-                        <div className="flex gap-2">
+                      <form onSubmit={handleSendReply} className="p-4 border-t border-[#2a2a2a] bg-[#0a0a0a]">
+                        <div className="flex gap-3">
                           <input
                             type="text"
                             value={newReply}
-                            onChange={(e) => setNewReply(e.target.value)}
+                            onChange={(e) => {
+                              setNewReply(e.target.value)
+                              handleAdminTyping()
+                            }}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' && !e.shiftKey) {
+                                e.preventDefault()
+                                handleSendReply(e)
+                              }
+                            }}
                             placeholder="Digite sua resposta..."
-                            className="flex-1 bg-[#2a2a2a] border-0 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-[#ff1e1e]"
+                            className="flex-1 bg-[#1a1a1a] border border-[#2a2a2a] rounded-xl px-4 py-3 text-sm text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#ff1e1e]/50 focus:border-[#ff1e1e] transition-all"
                             disabled={sendingReply}
                           />
                           <button
                             type="submit"
                             disabled={!newReply.trim() || sendingReply}
-                            className="w-10 h-10 bg-[#ff1e1e] rounded-lg flex items-center justify-center hover:bg-[#ff3333] transition-colors disabled:opacity-50"
+                            className="w-12 h-12 bg-gradient-to-br from-[#ff1e1e] to-[#cc0000] rounded-xl flex items-center justify-center hover:shadow-lg hover:shadow-[#ff1e1e]/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             {sendingReply ? (
-                              <div className="animate-spin w-4 h-4 border-2 border-white border-t-transparent rounded-full"></div>
+                              <div className="animate-spin w-5 h-5 border-2 border-white border-t-transparent rounded-full"></div>
                             ) : (
-                              <FiSend className="w-4 h-4 text-white" />
+                              <FiSend className="w-5 h-5 text-white" />
                             )}
                           </button>
                         </div>
+                        <p className="text-[10px] text-gray-600 mt-2">Pressione Enter para enviar</p>
                       </form>
                     </>
                   ) : (
-                    <div className="flex-1 flex items-center justify-center text-gray-400 text-sm">
+                    <div className="flex-1 flex items-center justify-center text-gray-400">
                       <div className="text-center">
-                        <FiMessageCircle className="w-8 h-8 mx-auto mb-2 opacity-50" />
-                        <p>Selecione uma conversa</p>
+                        <div className="w-16 h-16 bg-[#1a1a1a] rounded-full flex items-center justify-center mx-auto mb-4">
+                          <FiMessageCircle className="w-8 h-8 text-gray-500" />
+                        </div>
+                        <p className="font-medium mb-1">Nenhuma conversa selecionada</p>
+                        <p className="text-sm text-gray-500">Selecione uma conversa à esquerda</p>
                       </div>
                     </div>
                   )}
@@ -903,6 +1037,17 @@ const Admin = () => {
           </div>
         )}
       </div>
+
+      {/* Estilos de animação */}
+      <style>{`
+        @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fadeIn {
+          animation: fadeIn 0.2s ease-out;
+        }
+      `}</style>
     </div>
   )
 }
