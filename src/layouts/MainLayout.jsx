@@ -40,7 +40,7 @@ const MainLayout = () => {
       <Header />
       
       {/* Conteúdo principal com espaço para header fixo */}
-      <main className="flex-1 pt-28 md:pt-32">
+      <main className="flex-1" style={{ paddingTop: '120px' }}>
         <Outlet />
       </main>
       
