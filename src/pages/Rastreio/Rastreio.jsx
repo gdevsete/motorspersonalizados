@@ -200,7 +200,7 @@ const Rastreio = () => {
           <img 
             src="/logo-jadlog.png" 
             alt="Jadlog" 
-            style={{ height: '65px', width: 'auto' }}
+            style={{ height: '80px', width: 'auto' }}
             className="object-contain"
           />
         </div>
