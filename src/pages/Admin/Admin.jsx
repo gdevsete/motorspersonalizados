@@ -11,8 +11,8 @@ import { LoadingSpinner } from '../../components/UI'
 import { formatCurrency, formatDate, STATUS_LABELS, STATUS_COLORS, ORDER_STATUS } from '../../utils'
 import { 
   FiPackage, FiUsers, FiActivity, FiEye, FiTrash2, 
-  FiRefreshCw, FiCalendar, FiX,
-  FiUser, FiMapPin, FiImage, FiMessageCircle, FiSend, FiCheck
+  FiRefreshCw, FiCalendar, FiX, FiPlus,
+  FiUser, FiMapPin, FiImage, FiMessageCircle, FiSend, FiCheck, FiTruck, FiCopy
 } from 'react-icons/fi'
 import toast from 'react-hot-toast'
 import {
@@ -55,6 +55,161 @@ const Admin = () => {
   // Modal de pedido
   const [selectedOrder, setSelectedOrder] = useState(null)
   const [showOrderModal, setShowOrderModal] = useState(false)
+  
+  // Estados de rastreio
+  const [codigoRastreio, setCodigoRastreio] = useState('')
+  const [transportadora, setTransportadora] = useState('correios')
+  const [savingRastreio, setSavingRastreio] = useState(false)
+  
+  // Estados de atualizações de rastreio
+  const [rastreioAtualizacoes, setRastreioAtualizacoes] = useState([])
+  const [novaAtualizacao, setNovaAtualizacao] = useState({
+    status: '',
+    descricao: '',
+    local: ''
+  })
+  const [savingAtualizacao, setSavingAtualizacao] = useState(false)
+
+  // Status pré-definidos para atualizações
+  const STATUS_RASTREIO = [
+    'Pedido Recebido',
+    'Pagamento Confirmado',
+    'Em Produção',
+    'Objeto Postado',
+    'Objeto em Trânsito',
+    'Saiu para Entrega',
+    'Objeto Entregue',
+    'Tentativa de Entrega',
+    'Aguardando Retirada'
+  ]
+
+  // Gerar código de rastreio automático
+  const gerarCodigoRastreio = () => {
+    const prefixo = transportadora === 'correios' ? 'BR' : 'JD'
+    const timestamp = Date.now().toString(36).toUpperCase()
+    const random = Math.random().toString(36).substring(2, 6).toUpperCase()
+    const codigo = `${prefixo}${timestamp}${random}`
+    setCodigoRastreio(codigo)
+    return codigo
+  }
+
+  // Salvar dados de rastreio
+  const handleSalvarRastreio = async () => {
+    if (!selectedOrder || !codigoRastreio.trim()) {
+      toast.error('Informe o código de rastreio')
+      return
+    }
+
+    setSavingRastreio(true)
+    try {
+      const { error } = await supabase
+        .from('orders')
+        .update({ 
+          codigo_rastreio: codigoRastreio.trim(),
+          transportadora: transportadora,
+          status: 'enviado' // Atualiza para enviado automaticamente
+        })
+        .eq('id', selectedOrder.id)
+
+      if (error) throw error
+      
+      toast.success('Rastreio salvo com sucesso!')
+      
+      // Atualizar estado local
+      setSelectedOrder(prev => ({ 
+        ...prev, 
+        codigo_rastreio: codigoRastreio.trim(),
+        transportadora: transportadora,
+        status: 'enviado'
+      }))
+      
+      loadOrders()
+    } catch (error) {
+      console.error('Erro ao salvar rastreio:', error)
+      toast.error('Erro ao salvar rastreio')
+    } finally {
+      setSavingRastreio(false)
+    }
+  }
+
+  // Copiar código de rastreio
+  const copiarCodigo = () => {
+    navigator.clipboard.writeText(codigoRastreio)
+    toast.success('Código copiado!')
+  }
+
+  // Adicionar nova atualização de rastreio
+  const handleAdicionarAtualizacao = async () => {
+    if (!novaAtualizacao.status || !novaAtualizacao.descricao) {
+      toast.error('Preencha o status e descrição')
+      return
+    }
+
+    setSavingAtualizacao(true)
+    try {
+      const atualizacao = {
+        status: novaAtualizacao.status,
+        descricao: novaAtualizacao.descricao,
+        local: novaAtualizacao.local || 'Sapiranga/RS',
+        data: new Date().toISOString()
+      }
+
+      // Adicionar no início do array (mais recente primeiro)
+      const novasAtualizacoes = [atualizacao, ...rastreioAtualizacoes]
+
+      const { error } = await supabase
+        .from('orders')
+        .update({ rastreio_atualizacoes: novasAtualizacoes })
+        .eq('id', selectedOrder.id)
+
+      if (error) throw error
+
+      setRastreioAtualizacoes(novasAtualizacoes)
+      setSelectedOrder(prev => ({ ...prev, rastreio_atualizacoes: novasAtualizacoes }))
+      setNovaAtualizacao({ status: '', descricao: '', local: '' })
+      toast.success('Atualização adicionada!')
+      loadOrders()
+    } catch (error) {
+      console.error('Erro ao adicionar atualização:', error)
+      toast.error('Erro ao adicionar atualização')
+    } finally {
+      setSavingAtualizacao(false)
+    }
+  }
+
+  // Remover atualização
+  const handleRemoverAtualizacao = async (index) => {
+    if (!confirm('Remover esta atualização?')) return
+
+    try {
+      const novasAtualizacoes = rastreioAtualizacoes.filter((_, i) => i !== index)
+      
+      const { error } = await supabase
+        .from('orders')
+        .update({ rastreio_atualizacoes: novasAtualizacoes })
+        .eq('id', selectedOrder.id)
+
+      if (error) throw error
+
+      setRastreioAtualizacoes(novasAtualizacoes)
+      setSelectedOrder(prev => ({ ...prev, rastreio_atualizacoes: novasAtualizacoes }))
+      toast.success('Atualização removida!')
+      loadOrders()
+    } catch (error) {
+      console.error('Erro ao remover atualização:', error)
+      toast.error('Erro ao remover atualização')
+    }
+  }
+
+  // Atualizar campos quando selecionar pedido
+  useEffect(() => {
+    if (selectedOrder) {
+      setCodigoRastreio(selectedOrder.codigo_rastreio || '')
+      setTransportadora(selectedOrder.transportadora || 'correios')
+      setRastreioAtualizacoes(selectedOrder.rastreio_atualizacoes || [])
+      setNovaAtualizacao({ status: '', descricao: '', local: '' })
+    }
+  }, [selectedOrder])
 
   // Carregar pedidos
   const loadOrders = async () => {
@@ -996,6 +1151,213 @@ const Admin = () => {
                     <p className="text-sm text-gray-300">{selectedOrder.observacoes}</p>
                   </div>
                 )}
+
+                {/* Rastreio */}
+                <div className="bg-[#0a0a0a] rounded-lg p-4 border border-[#ff1e1e]/30">
+                  <h4 className="font-medium mb-3 flex items-center gap-2">
+                    <FiTruck className="text-[#ff1e1e]" />
+                    Rastreio do Envio
+                  </h4>
+                  
+                  {/* Selector de Transportadora */}
+                  <div className="mb-4">
+                    <label className="text-sm text-gray-400 block mb-2">Transportadora:</label>
+                    <div className="flex gap-4">
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="transportadora"
+                          value="correios"
+                          checked={transportadora === 'correios'}
+                          onChange={(e) => setTransportadora(e.target.value)}
+                          className="w-4 h-4 accent-[#ff1e1e]"
+                        />
+                        <img 
+                          src="/logo-correios.png" 
+                          alt="Correios" 
+                          style={{ height: '25px', width: 'auto' }}
+                        />
+                      </label>
+                      <label className="flex items-center gap-2 cursor-pointer">
+                        <input
+                          type="radio"
+                          name="transportadora"
+                          value="jadlog"
+                          checked={transportadora === 'jadlog'}
+                          onChange={(e) => setTransportadora(e.target.value)}
+                          className="w-4 h-4 accent-[#ff1e1e]"
+                        />
+                        <img 
+                          src="/logo-jadlog.png" 
+                          alt="Jadlog" 
+                          style={{ height: '35px', width: 'auto' }}
+                        />
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Código de Rastreio */}
+                  <div className="mb-4">
+                    <label className="text-sm text-gray-400 block mb-2">Código de Rastreio:</label>
+                    <div className="flex gap-2">
+                      <input
+                        type="text"
+                        value={codigoRastreio}
+                        onChange={(e) => setCodigoRastreio(e.target.value.toUpperCase())}
+                        placeholder="Digite ou gere o código"
+                        className="flex-1 px-4 py-2 rounded-lg bg-[#1a1a1a] border border-[#3a3a3a] focus:border-[#ff1e1e] outline-none text-white font-mono"
+                      />
+                      <button
+                        onClick={gerarCodigoRastreio}
+                        type="button"
+                        className="px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 transition-colors text-sm font-medium"
+                      >
+                        Gerar
+                      </button>
+                      {codigoRastreio && (
+                        <button
+                          onClick={copiarCodigo}
+                          type="button"
+                          className="px-3 py-2 rounded-lg bg-[#2a2a2a] hover:bg-[#3a3a3a] transition-colors"
+                          title="Copiar código"
+                        >
+                          <FiCopy className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Botão salvar */}
+                  <button
+                    onClick={handleSalvarRastreio}
+                    disabled={savingRastreio || !codigoRastreio.trim()}
+                    className={`w-full py-3 rounded-lg font-medium flex items-center justify-center gap-2 transition-colors
+                      ${codigoRastreio.trim() 
+                        ? 'bg-green-600 hover:bg-green-700' 
+                        : 'bg-gray-600 cursor-not-allowed'}`}
+                  >
+                    {savingRastreio ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        Salvando...
+                      </>
+                    ) : (
+                      <>
+                        <FiCheck className="w-4 h-4" />
+                        Salvar Rastreio e Marcar como Enviado
+                      </>
+                    )}
+                  </button>
+
+                  {/* Status atual do rastreio */}
+                  {selectedOrder.codigo_rastreio && (
+                    <div className="mt-4 p-3 bg-green-900/30 border border-green-600/50 rounded-lg">
+                      <p className="text-sm text-green-400 flex items-center gap-2">
+                        <FiCheck className="w-4 h-4" />
+                        Código cadastrado: <span className="font-mono font-bold">{selectedOrder.codigo_rastreio}</span>
+                        {selectedOrder.transportadora && (
+                          <span>({selectedOrder.transportadora === 'correios' ? 'Correios' : 'Jadlog'})</span>
+                        )}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Adicionar Atualização */}
+                  {selectedOrder.codigo_rastreio && (
+                    <div className="mt-6 border-t border-[#3a3a3a] pt-4">
+                      <h5 className="text-sm font-medium text-gray-300 mb-3 flex items-center gap-2">
+                        <FiPlus className="w-4 h-4 text-[#ff1e1e]" />
+                        Adicionar Atualização de Rastreio
+                      </h5>
+                      
+                      <div className="space-y-3">
+                        <div>
+                          <label className="text-xs text-gray-500 block mb-1">Status:</label>
+                          <select
+                            value={novaAtualizacao.status}
+                            onChange={(e) => setNovaAtualizacao(prev => ({ ...prev, status: e.target.value }))}
+                            className="w-full px-3 py-2 rounded-lg bg-[#1a1a1a] border border-[#3a3a3a] focus:border-[#ff1e1e] outline-none text-white text-sm"
+                          >
+                            <option value="">Selecione o status...</option>
+                            {STATUS_RASTREIO.map(status => (
+                              <option key={status} value={status}>{status}</option>
+                            ))}
+                          </select>
+                        </div>
+                        
+                        <div>
+                          <label className="text-xs text-gray-500 block mb-1">Descrição:</label>
+                          <input
+                            type="text"
+                            value={novaAtualizacao.descricao}
+                            onChange={(e) => setNovaAtualizacao(prev => ({ ...prev, descricao: e.target.value }))}
+                            placeholder="Ex: Objeto saiu do centro de distribuição"
+                            className="w-full px-3 py-2 rounded-lg bg-[#1a1a1a] border border-[#3a3a3a] focus:border-[#ff1e1e] outline-none text-white text-sm"
+                          />
+                        </div>
+                        
+                        <div>
+                          <label className="text-xs text-gray-500 block mb-1">Local:</label>
+                          <input
+                            type="text"
+                            value={novaAtualizacao.local}
+                            onChange={(e) => setNovaAtualizacao(prev => ({ ...prev, local: e.target.value }))}
+                            placeholder="Ex: São Paulo/SP"
+                            className="w-full px-3 py-2 rounded-lg bg-[#1a1a1a] border border-[#3a3a3a] focus:border-[#ff1e1e] outline-none text-white text-sm"
+                          />
+                        </div>
+                        
+                        <button
+                          onClick={handleAdicionarAtualizacao}
+                          disabled={savingAtualizacao || !novaAtualizacao.status || !novaAtualizacao.descricao}
+                          className={`w-full py-2 rounded-lg text-sm font-medium flex items-center justify-center gap-2 transition-colors
+                            ${novaAtualizacao.status && novaAtualizacao.descricao
+                              ? 'bg-blue-600 hover:bg-blue-700'
+                              : 'bg-gray-600 cursor-not-allowed'}`}
+                        >
+                          {savingAtualizacao ? (
+                            <>
+                              <div className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                              Adicionando...
+                            </>
+                          ) : (
+                            <>
+                              <FiPlus className="w-4 h-4" />
+                              Adicionar Atualização
+                            </>
+                          )}
+                        </button>
+                      </div>
+
+                      {/* Lista de atualizações existentes */}
+                      {rastreioAtualizacoes.length > 0 && (
+                        <div className="mt-4">
+                          <h5 className="text-xs font-medium text-gray-400 mb-2">Histórico ({rastreioAtualizacoes.length}):</h5>
+                          <div className="space-y-2 max-h-48 overflow-y-auto">
+                            {rastreioAtualizacoes.map((atualizacao, index) => (
+                              <div key={index} className="flex items-start justify-between gap-2 p-2 bg-[#1a1a1a] rounded-lg">
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-sm font-medium text-white truncate">{atualizacao.status}</p>
+                                  <p className="text-xs text-gray-400 truncate">{atualizacao.descricao}</p>
+                                  <p className="text-xs text-gray-500">
+                                    {atualizacao.local} - {new Date(atualizacao.data).toLocaleString('pt-BR')}
+                                  </p>
+                                </div>
+                                <button
+                                  onClick={() => handleRemoverAtualizacao(index)}
+                                  className="p-1 text-red-400 hover:text-red-300 hover:bg-red-500/20 rounded"
+                                  title="Remover atualização"
+                                >
+                                  <FiTrash2 className="w-3 h-3" />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
 
                 {/* Data */}
                 <div className="text-sm text-gray-400 flex items-center gap-2">

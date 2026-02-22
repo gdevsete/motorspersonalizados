@@ -55,8 +55,21 @@ const Rastreio = () => {
     }
   }
 
-  // Gerar histórico baseado no status
+  // Gerar histórico baseado no status e atualizações do admin
   const gerarHistorico = (pedido) => {
+    // Se há atualizações do admin, usar elas
+    if (pedido.rastreio_atualizacoes && pedido.rastreio_atualizacoes.length > 0) {
+      return pedido.rastreio_atualizacoes.map((atualizacao, index) => ({
+        status: atualizacao.status,
+        descricao: atualizacao.descricao,
+        data: new Date(atualizacao.data),
+        local: atualizacao.local,
+        concluido: true,
+        atual: index === 0 // Primeira é a mais recente
+      }))
+    }
+
+    // Fallback: gerar histórico baseado no status do pedido
     const historico = []
     const dataBase = new Date(pedido.created_at)
     
@@ -145,7 +158,7 @@ const Rastreio = () => {
         status: 'Objeto Entregue',
         descricao: 'Objeto entregue ao destinatário',
         data: data5,
-        local: pedido.cidade || 'Destino',
+        local: pedido.endereco_cidade ? `${pedido.endereco_cidade}/${pedido.endereco_estado}` : 'Destino',
         concluido: true,
         atual: true
       })
@@ -190,17 +203,17 @@ const Rastreio = () => {
         </div>
 
         {/* Logos das transportadoras */}
-        <div className="flex justify-center items-center gap-12 mb-8">
+        <div className="flex justify-center items-center gap-8 mb-8">
           <img 
             src="/logo-correios.png" 
             alt="Correios" 
-            style={{ height: '55px', width: 'auto' }}
+            style={{ height: '35px', width: 'auto' }}
             className="object-contain"
           />
           <img 
             src="/logo-jadlog.png" 
             alt="Jadlog" 
-            style={{ height: '80px', width: 'auto' }}
+            style={{ height: '50px', width: 'auto' }}
             className="object-contain"
           />
         </div>
@@ -250,9 +263,9 @@ const Rastreio = () => {
                 </div>
                 <div className="flex items-center gap-3">
                   {rastreioData.transportadora === 'jadlog' ? (
-                    <img src="/logo-jadlog.png" alt="Jadlog" className="h-8" />
+                    <img src="/logo-jadlog.png" alt="Jadlog" style={{ height: '80px', width: 'auto' }} />
                   ) : (
-                    <img src="/logo-correios.png" alt="Correios" className="h-8" />
+                    <img src="/logo-correios.png" alt="Correios" style={{ height: '80px', width: 'auto' }} />
                   )}
                 </div>
               </div>
@@ -271,7 +284,7 @@ const Rastreio = () => {
                 </div>
                 <div>
                   <p className="text-gray-500">Destino</p>
-                  <p className="text-white">{rastreioData.cidade || '-'}/{rastreioData.estado || '-'}</p>
+                  <p className="text-white">{rastreioData.endereco_cidade || '-'}/{rastreioData.endereco_estado || '-'}</p>
                 </div>
                 <div>
                   <p className="text-gray-500">Status</p>

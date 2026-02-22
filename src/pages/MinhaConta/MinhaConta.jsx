@@ -357,6 +357,46 @@ const MinhaConta = () => {
                           </div>
                         )}
 
+                        {/* Rastreio */}
+                        {(order.codigo_rastreio || order.status === 'enviado' || order.status === 'entregue') && (
+                          <div>
+                            <h4 className="text-sm font-semibold text-gray-300 mb-2 flex items-center gap-2">
+                              <FiPackage className="w-4 h-4" />
+                              Rastreio do Pedido
+                            </h4>
+                            <div className="bg-[#0a0a0a] rounded-lg p-4">
+                              {order.codigo_rastreio ? (
+                                <div className="space-y-3">
+                                  <div className="flex items-center justify-between">
+                                    <div>
+                                      <p className="text-xs text-gray-500">Código de Rastreio</p>
+                                      <p className="text-sm font-mono font-bold text-white">{order.codigo_rastreio}</p>
+                                    </div>
+                                    {order.transportadora && (
+                                      <img 
+                                        src={order.transportadora === 'jadlog' ? '/logo-jadlog.png' : '/logo-correios.png'}
+                                        alt={order.transportadora === 'jadlog' ? 'Jadlog' : 'Correios'}
+                                        style={{ height: '30px', width: 'auto' }}
+                                      />
+                                    )}
+                                  </div>
+                                  <Link
+                                    to={`/rastreio?codigo=${order.codigo_rastreio}`}
+                                    className="flex items-center gap-2 text-sm text-[#ff1e1e] hover:underline"
+                                  >
+                                    <FiExternalLink className="w-4 h-4" />
+                                    Ver rastreio completo
+                                  </Link>
+                                </div>
+                              ) : (
+                                <p className="text-sm text-gray-400">
+                                  O código de rastreio será disponibilizado em breve.
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        )}
+
                         {/* Observações */}
                         {order.observacoes && (
                           <div>
