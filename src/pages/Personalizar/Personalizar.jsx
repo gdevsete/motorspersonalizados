@@ -385,28 +385,18 @@ const Personalizar = () => {
       })
 
       if (authError) {
-        toast.error(authError.message || 'Erro ao criar conta')
+        // Verificar se é rate limit
+        if (authError.message?.includes('rate') || authError.status === 429) {
+          toast.error('Muitas tentativas. Aguarde 1 minuto e tente novamente.')
+        } else {
+          toast.error(authError.message || 'Erro ao criar conta')
+        }
         setCadastroLoading(false)
         return
       }
 
-      // Criar perfil do usuário
+      // Conta criada com sucesso
       if (authData.user) {
-        await supabase.from('profiles').upsert({
-          id: authData.user.id,
-          nome: formData.nome_cliente,
-          telefone: formData.telefone,
-          endereco: {
-            cep: formData.cep,
-            logradouro: formData.logradouro,
-            numero: formData.numero,
-            complemento: formData.complemento,
-            bairro: formData.bairro,
-            cidade: formData.cidade,
-            estado: formData.estado,
-          }
-        })
-
         toast.success('Conta criada com sucesso!')
         setShowModalCadastro(false)
         
