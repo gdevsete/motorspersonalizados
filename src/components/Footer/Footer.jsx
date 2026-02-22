@@ -149,7 +149,7 @@ const Footer = () => {
         <div className="mt-12 pt-8 border-t border-[#2a2a2a]">
           <div className="flex flex-col items-center gap-4">
             <p className="text-gray-500 text-sm mb-4">Formas de Envio</p>
-            <div className="flex items-center justify-center gap-12 py-4">
+            <div className="flex items-center justify-center gap-12 py-4" style={{ marginTop: '15px' }}>
               <img 
                 src="/logo-correios.png" 
                 alt="Correios" 
