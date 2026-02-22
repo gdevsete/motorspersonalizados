@@ -271,7 +271,7 @@ const Checkout = () => {
                     <label className="block text-sm font-medium mb-2">Nome Completo</label>
                     <input
                       type="text"
-                      value={formData.name}
+                      value={formData.name || ''}
                       onChange={(e) => handleInputChange('name', e.target.value)}
                       className={`input ${errors.name ? 'border-red-500' : ''}`}
                       placeholder="Seu nome completo"
@@ -286,7 +286,7 @@ const Checkout = () => {
                     <label className="block text-sm font-medium mb-2">E-mail</label>
                     <input
                       type="email"
-                      value={formData.email}
+                      value={formData.email || ''}
                       onChange={(e) => handleInputChange('email', e.target.value)}
                       className={`input ${errors.email ? 'border-red-500' : ''}`}
                       placeholder="seu@email.com"
@@ -301,7 +301,7 @@ const Checkout = () => {
                     <label className="block text-sm font-medium mb-2">Telefone (WhatsApp)</label>
                     <input
                       type="tel"
-                      value={formData.phone}
+                      value={formData.phone || ''}
                       onChange={(e) => handleInputChange('phone', e.target.value)}
                       className={`input ${errors.phone ? 'border-red-500' : ''}`}
                       placeholder="(11) 99999-9999"
@@ -316,7 +316,7 @@ const Checkout = () => {
                     <label className="block text-sm font-medium mb-2">CPF</label>
                     <input
                       type="text"
-                      value={formData.cpf}
+                      value={formData.cpf || ''}
                       onChange={(e) => handleInputChange('cpf', e.target.value)}
                       className={`input ${errors.cpf ? 'border-red-500' : ''}`}
                       placeholder="000.000.000-00"

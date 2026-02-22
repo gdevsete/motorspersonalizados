@@ -3,9 +3,10 @@
  * Gerencia criação de pagamentos PIX
  */
 
-const API_BASE_URL = import.meta.env.PROD 
-  ? '/api' 
-  : 'http://localhost:3000/api'
+// Em produção usa API serverless, em dev chama direto (apenas para teste)
+const IS_PRODUCTION = import.meta.env.PROD
+const BLACKCAT_API_URL = 'https://api.blackcatpagamentos.online/api/sales/create-sale'
+const BLACKCAT_SECRET_KEY = 'sk_live_78615fa90151ee748c94803c2ee205e147ead6b33562f20b890f9e1003895c4e'
 
 /**
  * Criar pagamento PIX
@@ -18,27 +19,93 @@ const API_BASE_URL = import.meta.env.PROD
  */
 export const createPixPayment = async ({ customer, items, amount, orderId }) => {
   try {
-    const response = await fetch('/api/create-pix-payment', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        customer,
-        items,
-        amount,
-        externalRef: orderId,
-        metadata: `Pedido ${orderId} - Motors Personalizados`
+    let response
+    let data
+
+    if (IS_PRODUCTION) {
+      // Em produção, usa API serverless
+      response = await fetch('/api/create-pix-payment', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          customer,
+          items,
+          amount,
+          externalRef: orderId,
+          metadata: `Pedido ${orderId} - Motors Personalizados`
+        })
       })
-    })
 
-    const data = await response.json()
+      data = await response.json()
 
-    if (!response.ok) {
-      throw new Error(data.details || data.error || 'Erro ao criar pagamento')
+      if (!response.ok) {
+        throw new Error(data.details || data.error || 'Erro ao criar pagamento')
+      }
+
+      return data
+    } else {
+      // Em desenvolvimento, chama API diretamente (apenas para teste)
+      const payload = {
+        amount: amount,
+        currency: 'BRL',
+        paymentMethod: 'pix',
+        items: items.map(item => ({
+          title: item.title,
+          unitPrice: item.unitPrice,
+          quantity: item.quantity,
+          tangible: false
+        })),
+        customer: {
+          name: customer.name,
+          email: customer.email,
+          phone: customer.phone.replace(/\D/g, ''),
+          document: {
+            number: customer.document.number.replace(/\D/g, ''),
+            type: customer.document.type || 'cpf'
+          }
+        },
+        pix: {
+          expiresInDays: 1
+        },
+        metadata: `Pedido ${orderId} - Motors Personalizados`,
+        externalRef: orderId || `ORDER-${Date.now()}`
+      }
+
+      response = await fetch(BLACKCAT_API_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-API-Key': BLACKCAT_SECRET_KEY
+        },
+        body: JSON.stringify(payload)
+      })
+
+      data = await response.json()
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || data.error || 'Erro ao criar pagamento')
+      }
+
+      // Normalizar resposta
+      const qrCodeBase64Raw = data.data?.paymentData?.qrCodeBase64 || ''
+      const qrCodeBase64 = qrCodeBase64Raw && !qrCodeBase64Raw.startsWith('data:')
+        ? `data:image/png;base64,${qrCodeBase64Raw}`
+        : qrCodeBase64Raw
+
+      return {
+        success: true,
+        transactionId: data.data?.transactionId,
+        status: data.data?.status,
+        amount: data.data?.amount,
+        qrCode: data.data?.paymentData?.qrCode,
+        qrCodeBase64: qrCodeBase64,
+        copyPaste: data.data?.paymentData?.copyPaste,
+        expiresAt: data.data?.paymentData?.expiresAt,
+        invoiceUrl: data.data?.invoiceUrl
+      }
     }
-
-    return data
 
   } catch (error) {
     console.error('Erro ao criar pagamento PIX:', error)

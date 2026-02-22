@@ -89,6 +89,12 @@ export default async function handler(req, res) {
       })
     }
 
+    // Processar QR Code base64 - adicionar prefixo se necessário
+    const qrCodeBase64Raw = data.data?.paymentData?.qrCodeBase64 || ''
+    const qrCodeBase64 = qrCodeBase64Raw && !qrCodeBase64Raw.startsWith('data:')
+      ? `data:image/png;base64,${qrCodeBase64Raw}`
+      : qrCodeBase64Raw
+
     // Retornar dados do pagamento
     return res.status(200).json({
       success: true,
@@ -96,7 +102,7 @@ export default async function handler(req, res) {
       status: data.data?.status,
       amount: data.data?.amount,
       qrCode: data.data?.paymentData?.qrCode,
-      qrCodeBase64: data.data?.paymentData?.qrCodeBase64,
+      qrCodeBase64: qrCodeBase64,
       copyPaste: data.data?.paymentData?.copyPaste,
       expiresAt: data.data?.paymentData?.expiresAt,
       invoiceUrl: data.data?.invoiceUrl
