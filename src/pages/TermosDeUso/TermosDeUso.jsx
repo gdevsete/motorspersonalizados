@@ -33,7 +33,7 @@ const TermosDeUso = () => {
   ]
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] py-12 md:py-20">
+    <div className="min-h-screen bg-[#0a0a0a] py-12 md:py-20" style={{ paddingTop: '120px' }}>
       <div className="container-custom flex flex-col items-center">
         {/* Header */}
         <div className="text-center mb-12">
