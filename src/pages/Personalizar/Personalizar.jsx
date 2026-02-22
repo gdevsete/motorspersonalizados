@@ -426,14 +426,7 @@ const Personalizar = () => {
       <div className="container-custom">
         {/* Header */}
         <div className="section-header">
-          <span className="section-badge bg-[#1a1a1a] text-[#ff1e1e]">
-            Personalização
-          </span>
-          <h1 className="section-title">
-            Crie sua <span className="text-gradient">miniatura exclusiva</span>
-          </h1>
           <p className="section-description">
-            Preencha os dados abaixo e personalize cada detalhe da sua miniatura
           </p>
         </div>
 
