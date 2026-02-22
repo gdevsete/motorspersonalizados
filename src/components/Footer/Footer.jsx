@@ -4,9 +4,8 @@
  */
 
 import { Link } from 'react-router-dom'
-import { FiInstagram, FiFacebook, FiMail, FiPhone, FiMapPin } from 'react-icons/fi'
-import { FaWhatsapp } from 'react-icons/fa'
-import { SOCIAL_LINKS, WHATSAPP_NUMBER } from '../../utils/constants'
+import { FiInstagram, FiFacebook, FiMail, FiMapPin } from 'react-icons/fi'
+import { SOCIAL_LINKS } from '../../utils/constants'
 
 const Footer = () => {
   const currentYear = new Date().getFullYear()
@@ -42,16 +41,6 @@ const Footer = () => {
                 aria-label="Facebook"
               >
                 <FiFacebook className="w-5 h-5" />
-              </a>
-              <a
-                href={SOCIAL_LINKS.whatsapp}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="w-10 h-10 bg-[#1a1a1a] rounded-lg flex items-center justify-center 
-                         text-gray-400 hover:text-green-500 hover:bg-[#2a2a2a] transition-all"
-                aria-label="WhatsApp"
-              >
-                <FaWhatsapp className="w-5 h-5" />
               </a>
             </div>
           </div>
@@ -115,16 +104,12 @@ const Footer = () => {
               <h3 className="text-white font-semibold mb-4">Contato</h3>
               <ul className="space-y-3">
                 <li className="flex items-center gap-3 text-gray-400 text-sm justify-center">
-                  <FiPhone className="w-4 h-4 text-[#ff1e1e]" />
-                  <span>(11) 99999-9999</span>
-                </li>
-                <li className="flex items-center gap-3 text-gray-400 text-sm justify-center">
                   <FiMail className="w-4 h-4 text-[#ff1e1e]" />
                   <span>contato@motorspersonalizados.com</span>
                 </li>
                 <li className="flex items-start gap-3 text-gray-400 text-sm justify-center">
                   <FiMapPin className="w-4 h-4 text-[#ff1e1e] mt-0.5" />
-                  <span>São Paulo, SP - Brasil</span>
+                  <span>Sapiranga, RS - Brasil</span>
                 </li>
               </ul>
             </div>

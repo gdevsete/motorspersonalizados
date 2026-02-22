@@ -3,9 +3,9 @@
  * Página inicial com hero, como funciona, galeria, depoimentos e CTA
  */
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { Link } from 'react-router-dom'
-import { FiUpload, FiEdit3, FiPackage, FiStar, FiArrowRight, FiCheck } from 'react-icons/fi'
+import { FiUpload, FiEdit3, FiPackage, FiStar, FiArrowRight, FiCheck, FiChevronLeft, FiChevronRight } from 'react-icons/fi'
 import { getTestimonials } from '../../services/testimonialService'
 import { TestimonialSkeleton } from '../../components/UI/Skeleton'
 import ImageGallery from '../../components/Gallery/ImageGallery'
@@ -14,6 +14,30 @@ const Home = () => {
   const [testimonials, setTestimonials] = useState([])
   const [loadingTestimonials, setLoadingTestimonials] = useState(true)
   const [heroImageIndex, setHeroImageIndex] = useState(0)
+  const [testimonialPage, setTestimonialPage] = useState(0)
+  const testimonialRef = useRef(null)
+  const touchStartX = useRef(0)
+  const touchEndX = useRef(0)
+
+  // Depoimentos fictícios com fotos
+  const fakeTestimonials = [
+    { nome: 'Carlos Mendes', cidade: 'São Paulo, SP', comentario: 'Ficou incrível! A miniatura ficou igualzinha à minha Honda CB 300. Recomendo demais!', nota: 5, foto: '/images/banners/avatar1.jpg' },
+    { nome: 'Ana Paula Silva', cidade: 'Rio de Janeiro, RJ', comentario: 'Presente perfeito pro meu marido. Ele amou a miniatura da Hornet dele! Qualidade impecável.', nota: 5, foto: '/images/banners/avatar2.jpg' },
+    { nome: 'Ricardo Santos', cidade: 'Curitiba, PR', comentario: 'Atendimento nota 10 e produto de altíssima qualidade. Já encomendei o segundo chaveiro!', nota: 5, foto: '/images/banners/avatar3.jpg' },
+    { nome: 'Fernanda Costa', cidade: 'Belo Horizonte, MG', comentario: 'Meu namorado chorou quando viu a miniatura da XJ6 dele. Ficou perfeita nos mínimos detalhes!', nota: 5, foto: '/images/banners/avatar4.jpg' },
+    { nome: 'João Pedro Alves', cidade: 'Porto Alegre, RS', comentario: 'Comprei para mim e já encomendei mais 3 para os amigos do grupo de motociclistas. Sensacional!', nota: 5, foto: '/images/banners/avatar5.jpg' },
+    { nome: 'Mariana Oliveira', cidade: 'Salvador, BA', comentario: 'A pintura ficou idêntica à minha moto. Parece uma foto em miniatura! Amei cada detalhe.', nota: 5, foto: '/images/banners/avatar6.jpg' },
+    { nome: 'Thiago Ribeiro', cidade: 'Brasília, DF', comentario: 'Entrega super rápida e embalagem caprichada. A miniatura da minha Fazer 250 ficou show!', nota: 5, foto: '/images/banners/avatar7.jpg' },
+    { nome: 'Juliana Martins', cidade: 'Recife, PE', comentario: 'Dei de aniversário pro meu pai e ele adorou! A CG 160 dele em miniatura ficou linda.', nota: 5, foto: '/images/banners/avatar8.jpg' },
+    { nome: 'Lucas Ferreira', cidade: 'Goiânia, GO', comentario: 'Qualidade premium! Os detalhes da corrente e dos pneus são impressionantes. Vale cada centavo!', nota: 5, foto: '/images/banners/avatar9.jpg' },
+    { nome: 'Camila Souza', cidade: 'Florianópolis, SC', comentario: 'Terceira vez que compro. Dessa vez foi a PCX da minha mãe. Ela amou o presente!', nota: 5, foto: '/images/banners/avatar10.jpg' },
+    { nome: 'Bruno Nascimento', cidade: 'Manaus, AM', comentario: 'Nunca vi um chaveiro tão bem feito. A Africa Twin ficou IDÊNTICA. Parabéns pelo trabalho!', nota: 5, foto: '/images/banners/avatar11.jpg' },
+    { nome: 'Patricia Lima', cidade: 'Fortaleza, CE', comentario: 'Encomendei receosa, mas superou todas as expectativas. Produto de qualidade excepcional!', nota: 5, foto: '/images/banners/avatar12.jpg' },
+  ]
+
+  // Total de páginas (3 depoimentos por página)
+  const totalPages = Math.ceil(fakeTestimonials.length / 3)
+  const currentTestimonials = fakeTestimonials.slice(testimonialPage * 3, testimonialPage * 3 + 3)
 
   // Imagens do carrossel hero
   const heroImages = [
@@ -57,6 +81,38 @@ const Home = () => {
     }, 3000)
     return () => clearInterval(interval)
   }, [heroImages.length])
+
+  // Auto-rotate dos depoimentos a cada 5 segundos
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setTestimonialPage(prev => (prev + 1) % totalPages)
+    }, 5000)
+    return () => clearInterval(interval)
+  }, [totalPages])
+
+  // Handlers de swipe para depoimentos
+  const handleTouchStart = useCallback((e) => {
+    touchStartX.current = e.touches[0].clientX
+  }, [])
+
+  const handleTouchMove = useCallback((e) => {
+    touchEndX.current = e.touches[0].clientX
+  }, [])
+
+  const handleTouchEnd = useCallback(() => {
+    const diff = touchStartX.current - touchEndX.current
+    const threshold = 50 // Mínimo de pixels para considerar swipe
+
+    if (Math.abs(diff) > threshold) {
+      if (diff > 0) {
+        // Swipe para esquerda - próxima página
+        setTestimonialPage(prev => (prev + 1) % totalPages)
+      } else {
+        // Swipe para direita - página anterior
+        setTestimonialPage(prev => (prev - 1 + totalPages) % totalPages)
+      }
+    }
+  }, [totalPages])
 
   // Passos "Como funciona"
   const steps = [
@@ -400,8 +456,8 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Depoimentos */}
-      <section className="py-24 md:py-32 bg-[#0a0a0a]">
+      {/* Depoimentos - Carrossel */}
+      <section className="py-24 md:py-32 bg-[#0a0a0a] overflow-hidden">
         <div className="container-custom">
           <div className="section-header">
             <span className="section-badge bg-[#1a1a1a] text-[#ff1e1e]">
@@ -411,18 +467,42 @@ const Home = () => {
               O que nossos clientes <span className="text-gradient">dizem</span>
             </h2>
             <p className="section-description">
-              Depoimentos reais de quem já transformou sua moto em miniatura
+              Mais de 500 clientes satisfeitos com suas miniaturas exclusivas
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-6">
-            {loadingTestimonials ? (
-              // Skeletons
-              [1, 2, 3].map((i) => <TestimonialSkeleton key={i} />)
-            ) : testimonials.length > 0 ? (
-              // Depoimentos reais
-              testimonials.map((testimonial) => (
-                <div key={testimonial.id} className="card">
+          {/* Carrossel */}
+          <div 
+            ref={testimonialRef}
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+            className="relative"
+          >
+            {/* Botões de navegação - Desktop */}
+            <button
+              onClick={() => setTestimonialPage(prev => (prev - 1 + totalPages) % totalPages)}
+              className="hidden md:flex absolute -left-4 top-1/2 -translate-y-1/2 z-10 w-12 h-12 bg-[#1a1a1a] hover:bg-[#ff1e1e] border border-[#2a2a2a] hover:border-[#ff1e1e] rounded-full items-center justify-center transition-all duration-300 shadow-lg"
+              aria-label="Anterior"
+            >
+              <FiChevronLeft className="w-6 h-6" />
+            </button>
+            <button
+              onClick={() => setTestimonialPage(prev => (prev + 1) % totalPages)}
+              className="hidden md:flex absolute -right-4 top-1/2 -translate-y-1/2 z-10 w-12 h-12 bg-[#1a1a1a] hover:bg-[#ff1e1e] border border-[#2a2a2a] hover:border-[#ff1e1e] rounded-full items-center justify-center transition-all duration-300 shadow-lg"
+              aria-label="Próximo"
+            >
+              <FiChevronRight className="w-6 h-6" />
+            </button>
+
+            {/* Cards de depoimentos */}
+            <div className="grid md:grid-cols-3 gap-6 transition-all duration-500 ease-in-out">
+              {currentTestimonials.map((testimonial, index) => (
+                <div 
+                  key={`${testimonialPage}-${index}`} 
+                  className="card animate-fadeIn"
+                  style={{ animationDelay: `${index * 100}ms` }}
+                >
                   {/* Rating */}
                   <div className="flex items-center gap-1 mb-4">
                     {[...Array(5)].map((_, i) => (
@@ -438,57 +518,49 @@ const Home = () => {
                   </div>
                   
                   {/* Comentário */}
-                  <p className="text-gray-300 mb-6 italic">
+                  <p className="text-gray-300 mb-6 italic leading-relaxed">
                     "{testimonial.comentario}"
                   </p>
                   
-                  {/* Autor */}
+                  {/* Autor com foto */}
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-[#ff1e1e]/20 flex items-center justify-center">
-                      <span className="text-sm font-bold text-[#ff1e1e]">
-                        {testimonial.nome.charAt(0)}
-                      </span>
-                    </div>
-                    <div>
-                      <p className="font-medium">{testimonial.nome}</p>
-                      <p className="text-sm text-gray-500">{testimonial.cidade}</p>
-                    </div>
-                  </div>
-                </div>
-              ))
-            ) : (
-              // Depoimentos placeholder
-              [
-                { nome: 'Carlos M.', cidade: 'São Paulo, SP', comentario: 'Ficou incrível! A miniatura ficou igualzinha à minha moto. Recomendo demais!', nota: 5 },
-                { nome: 'Ana Paula', cidade: 'Rio de Janeiro, RJ', comentario: 'Presente perfeito pro meu marido. Ele amou! Qualidade impecável.', nota: 5 },
-                { nome: 'Ricardo S.', cidade: 'Curitiba, PR', comentario: 'Atendimento nota 10 e produto de altíssima qualidade. Já encomendei o segundo!', nota: 5 },
-              ].map((testimonial, index) => (
-                <div key={index} className="card">
-                  <div className="flex items-center gap-1 mb-4">
-                    {[...Array(5)].map((_, i) => (
-                      <FiStar
-                        key={i}
-                        className="w-4 h-4 text-yellow-400 fill-yellow-400"
+                    <div className="w-12 h-12 min-w-[48px] min-h-[48px] rounded-full overflow-hidden border-2 border-[#ff1e1e]/30 shrink-0">
+                      <img 
+                        src={testimonial.foto} 
+                        alt={testimonial.nome}
+                        className="w-full h-full object-cover"
+                        loading="lazy"
                       />
-                    ))}
-                  </div>
-                  <p className="text-gray-300 mb-6 italic">
-                    "{testimonial.comentario}"
-                  </p>
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-[#ff1e1e]/20 flex items-center justify-center">
-                      <span className="text-sm font-bold text-[#ff1e1e]">
-                        {testimonial.nome.charAt(0)}
-                      </span>
                     </div>
                     <div>
-                      <p className="font-medium">{testimonial.nome}</p>
+                      <p className="font-semibold text-white">{testimonial.nome}</p>
                       <p className="text-sm text-gray-500">{testimonial.cidade}</p>
                     </div>
                   </div>
                 </div>
-              ))
-            )}
+              ))}
+            </div>
+
+            {/* Indicadores de página */}
+            <div className="flex justify-center items-center gap-2 mt-8">
+              {[...Array(totalPages)].map((_, i) => (
+                <button
+                  key={i}
+                  onClick={() => setTestimonialPage(i)}
+                  className={`transition-all duration-300 rounded-full ${
+                    i === testimonialPage 
+                      ? 'w-8 h-3 bg-[#ff1e1e]' 
+                      : 'w-3 h-3 bg-[#2a2a2a] hover:bg-[#ff1e1e]/50'
+                  }`}
+                  aria-label={`Ir para página ${i + 1}`}
+                />
+              ))}
+            </div>
+
+            {/* Dica de swipe - Mobile */}
+            <p className="text-center text-gray-500 text-xs mt-4 md:hidden">
+              ← Deslize para ver mais →
+            </p>
           </div>
         </div>
       </section>

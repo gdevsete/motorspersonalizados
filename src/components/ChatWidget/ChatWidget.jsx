@@ -21,6 +21,7 @@ import {
 const ChatWidget = () => {
   const { user } = useAuth()
   const [isOpen, setIsOpen] = useState(false)
+  const [showWelcome, setShowWelcome] = useState(false)
   const [conversation, setConversation] = useState(null)
   const [messages, setMessages] = useState([])
   const [newMessage, setNewMessage] = useState('')
@@ -31,6 +32,23 @@ const ChatWidget = () => {
   const messagesEndRef = useRef(null)
   const inputRef = useRef(null)
   const typingTimeoutRef = useRef(null)
+
+  // Mostrar popup de boas-vindas após 2 segundos
+  useEffect(() => {
+    const hasSeenWelcome = sessionStorage.getItem('chatWelcomeSeen')
+    if (!hasSeenWelcome && !isOpen) {
+      const timer = setTimeout(() => {
+        setShowWelcome(true)
+      }, 2000)
+      return () => clearTimeout(timer)
+    }
+  }, [])
+
+  // Fechar popup de boas-vindas
+  const dismissWelcome = () => {
+    setShowWelcome(false)
+    sessionStorage.setItem('chatWelcomeSeen', 'true')
+  }
 
   // Scroll para última mensagem
   const scrollToBottom = useCallback(() => {
@@ -123,6 +141,7 @@ const ChatWidget = () => {
   const handleOpen = () => {
     setIsOpen(true)
     setHasUnread(false)
+    dismissWelcome()
     if (!conversation) {
       initConversation()
     }
@@ -222,6 +241,48 @@ const ChatWidget = () => {
 
   return (
     <>
+      {/* Popup de boas-vindas */}
+      {showWelcome && !isOpen && (
+        <div className="fixed bottom-24 right-4 sm:bottom-28 sm:right-6 z-50 animate-slideUp">
+          <div className="bg-[#1a1a1a] border border-[#2a2a2a] rounded-2xl p-4 shadow-2xl max-w-[280px] relative">
+            {/* Seta apontando para o botão */}
+            <div className="absolute -bottom-2 right-6 w-4 h-4 bg-[#1a1a1a] border-r border-b border-[#2a2a2a] transform rotate-45"></div>
+            
+            {/* Botão fechar */}
+            <button
+              onClick={dismissWelcome}
+              className="absolute top-2 right-2 p-1 hover:bg-[#2a2a2a] rounded-full transition-colors"
+            >
+              <FiX className="w-4 h-4 text-gray-400" />
+            </button>
+            
+            {/* Conteúdo */}
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 bg-gradient-to-br from-[#ff1e1e] to-[#cc0000] rounded-full flex items-center justify-center shrink-0">
+                <FiHeadphones className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <p className="text-white text-sm font-medium mb-1">Precisa de ajuda? 👋</p>
+                <p className="text-gray-400 text-xs leading-relaxed">
+                  Clique no ícone ao lado para falar com nosso suporte em tempo real!
+                </p>
+              </div>
+            </div>
+            
+            {/* Botão de ação */}
+            <button
+              onClick={() => {
+                dismissWelcome()
+                handleOpen()
+              }}
+              className="w-full mt-3 py-2 bg-[#ff1e1e] hover:bg-[#cc0000] text-white text-sm font-medium rounded-lg transition-colors"
+            >
+              Iniciar conversa
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Botão flutuante */}
       {!isOpen && (
         <button
