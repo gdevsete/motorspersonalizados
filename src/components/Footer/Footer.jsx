@@ -77,24 +77,24 @@ const Footer = () => {
               <h3 className="text-white font-semibold mb-4">Informações</h3>
               <ul className="space-y-3">
                 <li>
-                  <a href="#" className="text-gray-400 hover:text-[#ff1e1e] transition-colors text-sm">
+                  <Link to="/#como-funciona" className="text-gray-400 hover:text-[#ff1e1e] transition-colors text-sm">
                     Como Funciona
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a href="#" className="text-gray-400 hover:text-[#ff1e1e] transition-colors text-sm">
-                    Perguntas Frequentes
-                  </a>
+                  <Link to="/termos-de-uso#trocas" className="text-gray-400 hover:text-[#ff1e1e] transition-colors text-sm">
+                    Trocas e Devoluções
+                  </Link>
                 </li>
                 <li>
-                  <a href="#" className="text-gray-400 hover:text-[#ff1e1e] transition-colors text-sm">
+                  <Link to="/termos-de-uso#privacidade" className="text-gray-400 hover:text-[#ff1e1e] transition-colors text-sm">
                     Política de Privacidade
-                  </a>
+                  </Link>
                 </li>
                 <li>
-                  <a href="#" className="text-gray-400 hover:text-[#ff1e1e] transition-colors text-sm">
+                  <Link to="/termos-de-uso" className="text-gray-400 hover:text-[#ff1e1e] transition-colors text-sm">
                     Termos de Uso
-                  </a>
+                  </Link>
                 </li>
               </ul>
             </div>

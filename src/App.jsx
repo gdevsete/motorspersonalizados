@@ -17,7 +17,8 @@ import {
   Cadastro, 
   RecuperarSenha, 
   MinhaConta,
-  Admin
+  Admin,
+  TermosDeUso
 } from './pages'
 
 // Components
@@ -60,6 +61,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/cadastro" element={<Cadastro />} />
           <Route path="/recuperar-senha" element={<RecuperarSenha />} />
+          <Route path="/termos-de-uso" element={<TermosDeUso />} />
 
           {/* Protegidas - Usuário */}
           <Route
