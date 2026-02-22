@@ -260,6 +260,146 @@ const Home = () => {
         </div>
       </section>
 
+      {/* Materiais e Qualidade */}
+      <section className="py-20 md:py-28 bg-[#0a0a0a] relative overflow-hidden">
+        {/* Background decorativo */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute -top-1/4 -right-1/4 w-[500px] h-[500px] bg-[#ff1e1e]/5 rounded-full blur-3xl" />
+          <div className="absolute -bottom-1/4 -left-1/4 w-[400px] h-[400px] bg-[#ff1e1e]/3 rounded-full blur-3xl" />
+        </div>
+
+        <div className="container-custom relative z-10">
+          <div className="section-header">
+            <span className="section-badge bg-[#1a1a1a] text-[#ff1e1e]">
+              Qualidade Premium
+            </span>
+            <h2 className="section-title">
+              Materiais de <span className="text-gradient">Alto Padrão</span>
+            </h2>
+            <p className="section-description">
+              Nossas miniaturas são produzidas com materiais selecionados para garantir resistência, realismo e acabamento premium.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
+            {/* Metal Die-Cast */}
+            <div className="card group hover:border-[#ff1e1e] transition-all duration-300 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-[#ff1e1e]/10 to-transparent rounded-bl-full"></div>
+              <div className="w-14 h-14 mb-5 bg-gradient-to-br from-[#ff1e1e]/20 to-[#ff1e1e]/5 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                <span className="text-3xl">🧱</span>
+              </div>
+              <h3 className="text-xl font-bold mb-3 text-white">Estrutura em Metal Die-Cast</h3>
+              <p className="text-gray-400 text-sm mb-4">
+                Utilizamos liga metálica de alta resistência (zamac), proporcionando:
+              </p>
+              <ul className="space-y-2">
+                {['Maior durabilidade', 'Peso realista', 'Detalhes mais precisos', 'Sensação premium ao toque'].map((item, i) => (
+                  <li key={i} className="flex items-center gap-2 text-gray-300 text-sm">
+                    <FiCheck className="w-4 h-4 text-[#ff1e1e] flex-shrink-0" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* ABS de Alta Qualidade */}
+            <div className="card group hover:border-[#ff1e1e] transition-all duration-300 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-[#ff1e1e]/10 to-transparent rounded-bl-full"></div>
+              <div className="w-14 h-14 mb-5 bg-gradient-to-br from-[#ff1e1e]/20 to-[#ff1e1e]/5 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                <span className="text-3xl">🧩</span>
+              </div>
+              <h3 className="text-xl font-bold mb-3 text-white">Componentes em ABS Premium</h3>
+              <p className="text-gray-400 text-sm mb-4">
+                Partes como carenagens, guidão e detalhes estruturais são produzidas em plástico ABS de engenharia:
+              </p>
+              <ul className="space-y-2">
+                {['Precisão nos acabamentos', 'Alta resistência', 'Excelente qualidade de pintura'].map((item, i) => (
+                  <li key={i} className="flex items-center gap-2 text-gray-300 text-sm">
+                    <FiCheck className="w-4 h-4 text-[#ff1e1e] flex-shrink-0" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Pneus em Borracha */}
+            <div className="card group hover:border-[#ff1e1e] transition-all duration-300 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-[#ff1e1e]/10 to-transparent rounded-bl-full"></div>
+              <div className="w-14 h-14 mb-5 bg-gradient-to-br from-[#ff1e1e]/20 to-[#ff1e1e]/5 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                <span className="text-3xl">🛞</span>
+              </div>
+              <h3 className="text-xl font-bold mb-3 text-white">Pneus em Borracha Sintética</h3>
+              <p className="text-gray-400 text-sm mb-4">
+                Os pneus são fabricados em material flexível de alta qualidade, com textura realista e acabamento semelhante ao original.
+              </p>
+              <div className="mt-auto pt-2">
+                <span className="inline-flex items-center gap-2 text-[#ff1e1e] text-sm font-medium">
+                  <FiCheck className="w-4 h-4" />
+                  Textura realista
+                </span>
+              </div>
+            </div>
+
+            {/* Pintura Profissional */}
+            <div className="card group hover:border-[#ff1e1e] transition-all duration-300 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-[#ff1e1e]/10 to-transparent rounded-bl-full"></div>
+              <div className="w-14 h-14 mb-5 bg-gradient-to-br from-[#ff1e1e]/20 to-[#ff1e1e]/5 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                <span className="text-3xl">🎨</span>
+              </div>
+              <h3 className="text-xl font-bold mb-3 text-white">Pintura com Verniz Protetor</h3>
+              <p className="text-gray-400 text-sm mb-4">
+                Aplicamos pintura em camadas com acabamento refinado e verniz de proteção:
+              </p>
+              <ul className="space-y-2">
+                {['Cores fiéis à moto original', 'Brilho intenso', 'Maior resistência ao desgaste'].map((item, i) => (
+                  <li key={i} className="flex items-center gap-2 text-gray-300 text-sm">
+                    <FiCheck className="w-4 h-4 text-[#ff1e1e] flex-shrink-0" />
+                    {item}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Corrente e Acessórios */}
+            <div className="card group hover:border-[#ff1e1e] transition-all duration-300 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-[#ff1e1e]/10 to-transparent rounded-bl-full"></div>
+              <div className="w-14 h-14 mb-5 bg-gradient-to-br from-[#ff1e1e]/20 to-[#ff1e1e]/5 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                <span className="text-3xl">🔗</span>
+              </div>
+              <h3 className="text-xl font-bold mb-3 text-white">Acessórios em Aço Niquelado</h3>
+              <p className="text-gray-400 text-sm mb-4">
+                Corrente e acessórios produzidos em aço niquelado para garantir resistência e durabilidade no uso diário como chaveiro.
+              </p>
+              <div className="mt-auto pt-2">
+                <span className="inline-flex items-center gap-2 text-[#ff1e1e] text-sm font-medium">
+                  <FiCheck className="w-4 h-4" />
+                  Uso diário garantido
+                </span>
+              </div>
+            </div>
+
+            {/* Card destaque */}
+            <div className="card group bg-gradient-to-br from-[#ff1e1e]/20 to-[#ff1e1e]/5 border-[#ff1e1e]/30 hover:border-[#ff1e1e] transition-all duration-300 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[#ff1e1e]/20 to-transparent rounded-bl-full"></div>
+              <div className="w-14 h-14 mb-5 bg-gradient-to-br from-[#ff1e1e] to-[#cc0000] rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300 shadow-lg shadow-[#ff1e1e]/30">
+                <span className="text-3xl">🔩</span>
+              </div>
+              <h3 className="text-xl font-bold mb-3 text-white">Qualidade Garantida</h3>
+              <p className="text-gray-300 text-sm mb-4">
+                Cada miniatura passa por rigoroso controle de qualidade antes do envio, garantindo que você receba um produto perfeito.
+              </p>
+              <Link 
+                to="/personalizar"
+                className="inline-flex items-center gap-2 text-[#ff1e1e] font-semibold text-sm hover:gap-3 transition-all"
+              >
+                Criar minha miniatura
+                <FiArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Depoimentos */}
       <section className="py-24 md:py-32 bg-[#0a0a0a]">
         <div className="container-custom">
