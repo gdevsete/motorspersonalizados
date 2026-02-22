@@ -595,14 +595,6 @@ const Home = () => {
             <p className="mt-6 text-gray-500 text-sm">
               A partir de R$ 79,00 • Entrega para todo Brasil
             </p>
-
-            {/* Badge de confiança */}
-            <div className="mt-8 pt-8 border-t border-[#2a2a2a]">
-              <p className="text-gray-500 text-xs">
-                <span className="text-gray-400 font-medium">Motors Personalizados</span><br />
-                CNPJ: 61.392.615/0001-03 • Sapiranga, RS - Brasil
-              </p>
-            </div>
           </div>
         </div>
       </section>

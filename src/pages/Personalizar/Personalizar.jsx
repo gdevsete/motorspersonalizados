@@ -360,8 +360,19 @@ const Personalizar = () => {
       return
     }
 
-    toast.success('Pedido criado com sucesso!')
-    navigate('/minha-conta')
+    // Navegar para checkout com dados do pedido
+    toast.success('Pedido criado! Finalize o pagamento.')
+    navigate('/checkout', { 
+      state: { 
+        orderData: {
+          orderId: data?.id || `MP-${Date.now()}`,
+          modelo: formData.modelo_moto,
+          cor: null,
+          preco: calcularPreco(),
+          imagem: imageFile ? URL.createObjectURL(imageFile) : null
+        }
+      }
+    })
   }
 
   // Callback do modal de cadastro

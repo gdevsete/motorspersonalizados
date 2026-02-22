@@ -3,12 +3,26 @@
  */
 
 import { useEffect } from 'react'
+import { useLocation } from 'react-router-dom'
 import { FiFileText, FiShield, FiRefreshCw, FiTruck, FiPackage } from 'react-icons/fi'
 
 const TermosDeUso = () => {
+  const location = useLocation()
+
   useEffect(() => {
-    window.scrollTo(0, 0)
-  }, [])
+    // Se tiver hash na URL, rola até a seção
+    if (location.hash) {
+      const id = location.hash.replace('#', '')
+      setTimeout(() => {
+        const element = document.getElementById(id)
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth' })
+        }
+      }, 100)
+    } else {
+      window.scrollTo(0, 0)
+    }
+  }, [location])
 
   const sections = [
     { id: 'termos', icon: FiFileText, title: 'Termos de Uso' },
@@ -20,7 +34,7 @@ const TermosDeUso = () => {
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] py-12 md:py-20">
-      <div className="container-custom">
+      <div className="container-custom flex flex-col items-center">
         {/* Header */}
         <div className="text-center mb-12">
           <span className="inline-block px-4 py-2 bg-[#1a1a1a] text-[#ff1e1e] text-sm font-medium rounded-full mb-4">
@@ -265,16 +279,6 @@ const TermosDeUso = () => {
               </div>
             </div>
           </section>
-
-          {/* CNPJ e Contato */}
-          <div className="text-center py-8 border-t border-[#2a2a2a]">
-            <p className="text-gray-400 text-sm">
-              <strong className="text-white">Motors Personalizados</strong><br />
-              CNPJ: 61.392.615/0001-03<br />
-              Sapiranga – RS, Brasil<br />
-              contato@motorspersonalizados.com
-            </p>
-          </div>
 
         </div>
       </div>

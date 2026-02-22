@@ -3,12 +3,34 @@
  * Rodapé completo da aplicação
  */
 
-import { Link } from 'react-router-dom'
+import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { FiInstagram, FiFacebook, FiMail, FiMapPin } from 'react-icons/fi'
 import { SOCIAL_LINKS } from '../../utils/constants'
 
 const Footer = () => {
   const currentYear = new Date().getFullYear()
+  const navigate = useNavigate()
+  const location = useLocation()
+
+  // Função para navegar e rolar até âncora
+  const scrollToSection = (sectionId) => {
+    if (location.pathname === '/') {
+      // Já está na Home, apenas rola
+      const element = document.getElementById(sectionId)
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth' })
+      }
+    } else {
+      // Navega para Home e depois rola
+      navigate('/')
+      setTimeout(() => {
+        const element = document.getElementById(sectionId)
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth' })
+        }
+      }, 100)
+    }
+  }
 
   return (
     <footer className="bg-[#0a0a0a] border-t border-[#2a2a2a] mt-16">
@@ -77,9 +99,12 @@ const Footer = () => {
               <h3 className="text-white font-semibold mb-4">Informações</h3>
               <ul className="space-y-3">
                 <li>
-                  <Link to="/#como-funciona" className="text-gray-400 hover:text-[#ff1e1e] transition-colors text-sm">
+                  <button 
+                    onClick={() => scrollToSection('como-funciona')} 
+                    className="text-gray-400 hover:text-[#ff1e1e] transition-colors text-sm"
+                  >
                     Como Funciona
-                  </Link>
+                  </button>
                 </li>
                 <li>
                   <Link to="/termos-de-uso#trocas" className="text-gray-400 hover:text-[#ff1e1e] transition-colors text-sm">
@@ -117,9 +142,12 @@ const Footer = () => {
 
         {/* Copyright */}
         <div className="mt-12 pt-8 border-t border-[#2a2a2a]">
-          <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:justify-between">
+          <div className="flex flex-col items-center gap-4">
             <p className="text-gray-500 text-sm text-center">
               © {currentYear} Motors Personalizados. Todos os direitos reservados.
+            </p>
+            <p className="text-gray-500 text-xs text-center">
+              CNPJ: 61.392.615/0001-03 • Sapiranga, RS - Brasil
             </p>
             <p className="text-gray-600 text-xs">
               Feito com ❤️ para apaixonados por motos

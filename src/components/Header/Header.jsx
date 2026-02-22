@@ -62,7 +62,7 @@ const Header = () => {
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-[#0a0a0a]/95 backdrop-blur-md border-b border-[#2a2a2a]">
       <div className="container-custom">
-        <nav className="flex items-center justify-between h-20 md:h-24">
+        <nav className="flex items-center justify-between h-20 md:h-24 overflow-hidden">
           {/* Logo */}
           <Link 
             to="/" 
