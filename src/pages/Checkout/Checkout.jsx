@@ -435,17 +435,10 @@ const Checkout = () => {
                   </ol>
                 </div>
 
-                {/* Link da fatura */}
-                {paymentData.invoiceUrl && (
-                  <a
-                    href={paymentData.invoiceUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-block mt-4 text-sm text-[#ff1e1e] hover:underline"
-                  >
-                    Ver fatura completa →
-                  </a>
-                )}
+                {/* Aviso nota fiscal */}
+                <p className="mt-4 text-xs text-gray-500 text-center">
+                  📧 A nota fiscal será enviada automaticamente para seu e-mail após a confirmação do pagamento.
+                </p>
               </div>
             )}
           </div>
