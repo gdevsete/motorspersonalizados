@@ -1,0 +1,149 @@
+/**
+ * Footer Component
+ * Rodapé completo da aplicação
+ */
+
+import { Link } from 'react-router-dom'
+import { FiInstagram, FiFacebook, FiMail, FiPhone, FiMapPin } from 'react-icons/fi'
+import { FaWhatsapp } from 'react-icons/fa'
+import { SOCIAL_LINKS, WHATSAPP_NUMBER } from '../../utils/constants'
+
+const Footer = () => {
+  const currentYear = new Date().getFullYear()
+
+  return (
+    <footer className="bg-[#0a0a0a] border-t border-[#2a2a2a] mt-16">
+      <div className="container-custom py-20 md:py-24">
+        {/* Grid de Links e Contato */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8 lg:gap-12">
+          {/* Sobre */}
+          <div className="text-center">
+            <p className="text-gray-400 text-sm leading-relaxed mb-4">
+              Transforme sua moto em uma miniatura exclusiva! 
+              Criamos chaveiros personalizados com design premium e detalhes únicos.
+            </p>
+            <div className="flex items-center gap-4 justify-center">
+              <a
+                href={SOCIAL_LINKS.instagram}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-10 h-10 bg-[#1a1a1a] rounded-lg flex items-center justify-center 
+                         text-gray-400 hover:text-[#ff1e1e] hover:bg-[#2a2a2a] transition-all"
+                aria-label="Instagram"
+              >
+                <FiInstagram className="w-5 h-5" />
+              </a>
+              <a
+                href={SOCIAL_LINKS.facebook}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-10 h-10 bg-[#1a1a1a] rounded-lg flex items-center justify-center 
+                         text-gray-400 hover:text-[#ff1e1e] hover:bg-[#2a2a2a] transition-all"
+                aria-label="Facebook"
+              >
+                <FiFacebook className="w-5 h-5" />
+              </a>
+              <a
+                href={SOCIAL_LINKS.whatsapp}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-10 h-10 bg-[#1a1a1a] rounded-lg flex items-center justify-center 
+                         text-gray-400 hover:text-green-500 hover:bg-[#2a2a2a] transition-all"
+                aria-label="WhatsApp"
+              >
+                <FaWhatsapp className="w-5 h-5" />
+              </a>
+            </div>
+          </div>
+
+          {/* Links Rápidos */}
+          <div className="text-center">
+              <h3 className="text-white font-semibold mb-4">Links Rápidos</h3>
+              <ul className="space-y-3">
+                <li>
+                  <Link to="/" className="text-gray-400 hover:text-[#ff1e1e] transition-colors text-sm">
+                    Home
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/personalizar" className="text-gray-400 hover:text-[#ff1e1e] transition-colors text-sm">
+                    Personalizar
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/minha-conta" className="text-gray-400 hover:text-[#ff1e1e] transition-colors text-sm">
+                    Minha Conta
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/login" className="text-gray-400 hover:text-[#ff1e1e] transition-colors text-sm">
+                    Login
+                  </Link>
+                </li>
+              </ul>
+            </div>
+
+            {/* Informações */}
+            <div className="text-center">
+              <h3 className="text-white font-semibold mb-4">Informações</h3>
+              <ul className="space-y-3">
+                <li>
+                  <a href="#" className="text-gray-400 hover:text-[#ff1e1e] transition-colors text-sm">
+                    Como Funciona
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="text-gray-400 hover:text-[#ff1e1e] transition-colors text-sm">
+                    Perguntas Frequentes
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="text-gray-400 hover:text-[#ff1e1e] transition-colors text-sm">
+                    Política de Privacidade
+                  </a>
+                </li>
+                <li>
+                  <a href="#" className="text-gray-400 hover:text-[#ff1e1e] transition-colors text-sm">
+                    Termos de Uso
+                  </a>
+                </li>
+              </ul>
+            </div>
+
+            {/* Contato */}
+            <div className="text-center">
+              <h3 className="text-white font-semibold mb-4">Contato</h3>
+              <ul className="space-y-3">
+                <li className="flex items-center gap-3 text-gray-400 text-sm justify-center">
+                  <FiPhone className="w-4 h-4 text-[#ff1e1e]" />
+                  <span>(11) 99999-9999</span>
+                </li>
+                <li className="flex items-center gap-3 text-gray-400 text-sm justify-center">
+                  <FiMail className="w-4 h-4 text-[#ff1e1e]" />
+                  <span>contato@motorspersonalizados.com</span>
+                </li>
+                <li className="flex items-start gap-3 text-gray-400 text-sm justify-center">
+                  <FiMapPin className="w-4 h-4 text-[#ff1e1e] mt-0.5" />
+                  <span>São Paulo, SP - Brasil</span>
+                </li>
+              </ul>
+            </div>
+        </div>
+
+        {/* Copyright */}
+        <div className="mt-12 pt-8 border-t border-[#2a2a2a]">
+          <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:justify-between">
+            <p className="text-gray-500 text-sm text-center">
+              © {currentYear} Motors Personalizados. Todos os direitos reservados.
+            </p>
+            <p className="text-gray-600 text-xs">
+              Feito com ❤️ para apaixonados por motos
+            </p>
+          </div>
+        </div>
+      </div>
+    </footer>
+  )
+}
+
+export default Footer

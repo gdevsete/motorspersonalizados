@@ -1,0 +1,331 @@
+/**
+ * Minha Conta Page
+ * Página do usuário com listagem de pedidos e dados completos
+ */
+
+import { useEffect, useState } from 'react'
+import { Link } from 'react-router-dom'
+import { useAuth } from '../../context/AuthContext'
+import { useOrders } from '../../hooks/useOrders'
+import { OrderSkeleton } from '../../components/UI/Skeleton'
+import { formatCurrency, formatDate, STATUS_LABELS, STATUS_COLORS } from '../../utils'
+import { FiPackage, FiPlus, FiExternalLink, FiUser, FiMail, FiPhone, FiMapPin, FiTruck, FiChevronDown, FiChevronUp, FiImage } from 'react-icons/fi'
+
+const MinhaConta = () => {
+  const { user } = useAuth()
+  const { orders, loading, fetchUserOrders } = useOrders()
+  const [expandedOrder, setExpandedOrder] = useState(null)
+
+  // Carregar pedidos ao montar
+  useEffect(() => {
+    fetchUserOrders()
+  }, [fetchUserOrders])
+
+  // Toggle expandir pedido
+  const toggleExpand = (orderId) => {
+    setExpandedOrder(expandedOrder === orderId ? null : orderId)
+  }
+
+  return (
+    <div className="min-h-screen py-12">
+      <div className="container-custom">
+        {/* Header */}
+        <div className="mb-12">
+          <h1 className="text-3xl md:text-4xl font-bold mb-4">
+            Minha <span className="text-gradient">Conta</span>
+          </h1>
+          <p className="text-gray-400">
+            Gerencie seus pedidos e informações da conta
+          </p>
+        </div>
+
+        <div className="grid lg:grid-cols-3 gap-8">
+          {/* Sidebar - Informações do usuário */}
+          <div className="lg:col-span-1">
+            <div className="card sticky top-24">
+              <div className="text-center mb-6">
+                <div className="w-20 h-20 mx-auto mb-4 bg-[#ff1e1e]/20 rounded-full 
+                              flex items-center justify-center">
+                  <FiUser className="w-10 h-10 text-[#ff1e1e]" />
+                </div>
+                <h2 className="text-xl font-bold">
+                  {user?.user_metadata?.nome || 'Usuário'}
+                </h2>
+                <p className="text-gray-400 text-sm flex items-center justify-center gap-2 mt-2">
+                  <FiMail className="w-4 h-4" />
+                  {user?.email}
+                </p>
+                {user?.user_metadata?.telefone && (
+                  <p className="text-gray-400 text-sm flex items-center justify-center gap-2 mt-1">
+                    <FiPhone className="w-4 h-4" />
+                    {user?.user_metadata?.telefone}
+                  </p>
+                )}
+              </div>
+
+              {/* Estatísticas */}
+              <div className="grid grid-cols-2 gap-4 mb-6">
+                <div className="bg-[#0a0a0a] rounded-lg p-4 text-center">
+                  <p className="text-2xl font-bold text-[#ff1e1e]">{orders.length}</p>
+                  <p className="text-xs text-gray-400">Total Pedidos</p>
+                </div>
+                <div className="bg-[#0a0a0a] rounded-lg p-4 text-center">
+                  <p className="text-2xl font-bold text-green-500">
+                    {orders.filter(o => o.status === 'entregue').length}
+                  </p>
+                  <p className="text-xs text-gray-400">Entregues</p>
+                </div>
+              </div>
+
+              {/* Ações */}
+              <Link
+                to="/personalizar"
+                className="btn-glow w-full flex items-center justify-center gap-2"
+              >
+                <FiPlus className="w-5 h-5" />
+                Novo Pedido
+              </Link>
+            </div>
+          </div>
+
+          {/* Lista de Pedidos */}
+          <div className="lg:col-span-2">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold flex items-center gap-2">
+                <FiPackage className="w-6 h-6 text-[#ff1e1e]" />
+                Meus Pedidos
+              </h2>
+              <span className="text-sm text-gray-400">
+                {orders.length} pedido{orders.length !== 1 ? 's' : ''}
+              </span>
+            </div>
+
+            {loading ? (
+              // Loading skeletons
+              <div className="space-y-4">
+                {[1, 2, 3].map((i) => <OrderSkeleton key={i} />)}
+              </div>
+            ) : orders.length === 0 ? (
+              // Estado vazio
+              <div className="card text-center py-12">
+                <div className="w-20 h-20 mx-auto mb-6 bg-[#1a1a1a] rounded-full 
+                              flex items-center justify-center">
+                  <FiPackage className="w-10 h-10 text-gray-600" />
+                </div>
+                <h3 className="text-xl font-bold mb-2">Nenhum pedido ainda</h3>
+                <p className="text-gray-400 mb-6">
+                  Crie sua primeira miniatura personalizada agora!
+                </p>
+                <Link to="/personalizar" className="btn-glow inline-flex items-center gap-2">
+                  <FiPlus className="w-5 h-5" />
+                  Criar miniatura
+                </Link>
+              </div>
+            ) : (
+              // Lista de pedidos
+              <div className="space-y-4">
+                {orders.map((order) => (
+                  <div key={order.id} className="card">
+                    {/* Header do Pedido */}
+                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-4">
+                      <div className="flex gap-4">
+                        {/* Thumbnail da foto */}
+                        {order.foto_moto_url ? (
+                          <a
+                            href={order.foto_moto_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex-shrink-0"
+                          >
+                            <img
+                              src={order.foto_moto_url}
+                              alt={order.modelo_moto}
+                              className="w-16 h-16 sm:w-20 sm:h-20 object-cover rounded-lg border border-[#2a2a2a] hover:border-[#ff1e1e] transition-colors"
+                            />
+                          </a>
+                        ) : (
+                          <div className="w-16 h-16 sm:w-20 sm:h-20 bg-[#1a1a1a] rounded-lg flex items-center justify-center">
+                            <FiImage className="w-8 h-8 text-gray-600" />
+                          </div>
+                        )}
+                        
+                        <div>
+                          <div className="flex items-center gap-3 mb-2 flex-wrap">
+                            <h3 className="font-bold">{order.modelo_moto}</h3>
+                            <span className={`px-3 py-1 rounded-full text-xs font-medium ${STATUS_COLORS[order.status]} text-white`}>
+                              {STATUS_LABELS[order.status]}
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-400">
+                            Pedido em {formatDate(order.created_at)}
+                          </p>
+                          <p className="text-sm text-gray-500 mt-1">
+                            {order.nome_cliente}
+                          </p>
+                        </div>
+                      </div>
+                      <p className="text-xl font-bold text-[#ff1e1e]">
+                        {formatCurrency(order.valor_total)}
+                      </p>
+                    </div>
+
+                    {/* Resumo dos adicionais */}
+                    <div className="flex flex-wrap gap-2 py-3 border-t border-[#2a2a2a]">
+                      {order.placa_personalizada && (
+                        <span className="px-2 py-1 bg-[#1a1a1a] rounded text-xs">
+                          Placa: <span className="font-mono">{order.placa_personalizada}</span>
+                        </span>
+                      )}
+                      {order.nome_gravado && (
+                        <span className="px-2 py-1 bg-[#1a1a1a] rounded text-xs">
+                          Nome: {order.nome_gravado}
+                        </span>
+                      )}
+                      {order.embalagem_premium && (
+                        <span className="px-2 py-1 bg-amber-500/20 text-amber-400 rounded text-xs">
+                          Embalagem Premium
+                        </span>
+                      )}
+                      {order.frete_tipo && (
+                        <span className="px-2 py-1 bg-blue-500/20 text-blue-400 rounded text-xs flex items-center gap-1">
+                          <FiTruck className="w-3 h-3" />
+                          {order.frete_tipo === 'correios_gratis' ? 'Correios Grátis' : 
+                           order.frete_tipo === 'sedex' ? 'Sedex 10' : 'Jadlog PAC'}
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Botão expandir */}
+                    <button
+                      onClick={() => toggleExpand(order.id)}
+                      className="w-full flex items-center justify-center gap-2 py-2 text-sm text-gray-400 hover:text-white transition-colors"
+                    >
+                      {expandedOrder === order.id ? (
+                        <>
+                          <FiChevronUp className="w-4 h-4" />
+                          Ocultar detalhes
+                        </>
+                      ) : (
+                        <>
+                          <FiChevronDown className="w-4 h-4" />
+                          Ver detalhes completos
+                        </>
+                      )}
+                    </button>
+
+                    {/* Detalhes expandidos */}
+                    {expandedOrder === order.id && (
+                      <div className="border-t border-[#2a2a2a] pt-4 mt-2 space-y-4 animate-fadeIn">
+                        {/* Dados do cliente */}
+                        <div>
+                          <h4 className="text-sm font-semibold text-gray-300 mb-2 flex items-center gap-2">
+                            <FiUser className="w-4 h-4" />
+                            Dados do Cliente
+                          </h4>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-[#0a0a0a] rounded-lg p-4">
+                            <div>
+                              <p className="text-xs text-gray-500">Nome</p>
+                              <p className="text-sm">{order.nome_cliente}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-500">Telefone</p>
+                              <p className="text-sm">{order.telefone || '-'}</p>
+                            </div>
+                            <div className="sm:col-span-2">
+                              <p className="text-xs text-gray-500">E-mail</p>
+                              <p className="text-sm">{order.email || '-'}</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Endereço de entrega */}
+                        {order.endereco_cep && (
+                          <div>
+                            <h4 className="text-sm font-semibold text-gray-300 mb-2 flex items-center gap-2">
+                              <FiMapPin className="w-4 h-4" />
+                              Endereço de Entrega
+                            </h4>
+                            <div className="bg-[#0a0a0a] rounded-lg p-4">
+                              <p className="text-sm">
+                                {order.endereco_logradouro}, {order.endereco_numero}
+                                {order.endereco_complemento && ` - ${order.endereco_complemento}`}
+                              </p>
+                              <p className="text-sm text-gray-400">
+                                {order.endereco_bairro}, {order.endereco_cidade} - {order.endereco_estado}
+                              </p>
+                              <p className="text-sm text-gray-500">
+                                CEP: {order.endereco_cep}
+                              </p>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Informações do frete */}
+                        {order.frete_tipo && (
+                          <div>
+                            <h4 className="text-sm font-semibold text-gray-300 mb-2 flex items-center gap-2">
+                              <FiTruck className="w-4 h-4" />
+                              Informações de Envio
+                            </h4>
+                            <div className="bg-[#0a0a0a] rounded-lg p-4 grid grid-cols-3 gap-4">
+                              <div>
+                                <p className="text-xs text-gray-500">Método</p>
+                                <p className="text-sm">
+                                  {order.frete_tipo === 'correios_gratis' ? 'Correios Grátis' : 
+                                   order.frete_tipo === 'sedex' ? 'Sedex 10' : 'Jadlog PAC'}
+                                </p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-gray-500">Valor</p>
+                                <p className="text-sm">
+                                  {order.frete_valor === 0 ? (
+                                    <span className="text-green-400">Grátis</span>
+                                  ) : (
+                                    formatCurrency(order.frete_valor)
+                                  )}
+                                </p>
+                              </div>
+                              <div>
+                                <p className="text-xs text-gray-500">Prazo</p>
+                                <p className="text-sm">{order.frete_prazo} dias úteis</p>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Observações */}
+                        {order.observacoes && (
+                          <div>
+                            <h4 className="text-sm font-semibold text-gray-300 mb-2">Observações</h4>
+                            <p className="text-sm text-gray-400 bg-[#0a0a0a] rounded-lg p-4">
+                              {order.observacoes}
+                            </p>
+                          </div>
+                        )}
+
+                        {/* Link para foto ampliada */}
+                        {order.foto_moto_url && (
+                          <a
+                            href={order.foto_moto_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 text-sm text-[#ff1e1e] hover:underline"
+                          >
+                            <FiExternalLink className="w-4 h-4" />
+                            Ver foto em tamanho original
+                          </a>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default MinhaConta
