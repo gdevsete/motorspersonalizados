@@ -363,15 +363,18 @@ const Personalizar = () => {
       return
     }
 
+    // Verificar se email foi preenchido
+    if (!formData.email || !formData.email.trim()) {
+      toast.error('É necessário informar um e-mail válido para criar a conta')
+      setShowModalCadastro(false)
+      return
+    }
+
     setCadastroLoading(true)
 
     try {
-      // Criar conta com email baseado no telefone
-      const telefoneLimpo = formData.telefone.replace(/\D/g, '')
-      const emailTemp = `${telefoneLimpo}@motorspersonalizados.com`
-
       const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: emailTemp,
+        email: formData.email.trim(),
         password: senha,
         options: {
           data: {
@@ -454,6 +457,15 @@ const Personalizar = () => {
                     value={formData.nome_cliente}
                     onChange={handleChange}
                     placeholder="Seu nome"
+                    required
+                  />
+                  <Input
+                    label="E-mail *"
+                    name="email"
+                    value={formData.email}
+                    onChange={handleChange}
+                    placeholder="seu@email.com"
+                    type="email"
                     required
                   />
                   <Input

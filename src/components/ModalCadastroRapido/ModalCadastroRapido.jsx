@@ -67,16 +67,20 @@ const ModalCadastroRapido = ({ isOpen, onClose, onConfirm, dadosCliente, loading
 
           {/* Resumo do pedido */}
           <div className="bg-[#1a1a1a] rounded-lg p-4 mb-6 space-y-4">
-            <p className="text-sm font-semibold text-white border-b border-[#2a2a2a] pb-2">Resumo do seu pedido:</p>
+            <p className="text-sm font-semibold text-white border-b border-[#2a2a2a] pb-2">Será criada uma conta com:</p>
             
             {/* Dados pessoais */}
             <div className="flex items-start gap-3">
               <FiUser className="w-4 h-4 text-[#ff1e1e] mt-0.5 flex-shrink-0" />
               <div className="text-sm">
                 <p className="text-white font-medium">{dadosCliente?.nome}</p>
+                <p className="text-gray-300 font-medium">{dadosCliente?.email}</p>
                 <p className="text-gray-400">{dadosCliente?.telefone}</p>
-                {dadosCliente?.email && <p className="text-gray-400">{dadosCliente?.email}</p>}
               </div>
+            </div>
+
+            <div className="border-t border-[#2a2a2a] pt-3">
+              <p className="text-xs text-gray-500">Resumo do pedido:</p>
             </div>
 
             {/* Modelo da moto */}
