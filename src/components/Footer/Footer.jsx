@@ -148,8 +148,8 @@ const Footer = () => {
         {/* Formas de Envio */}
         <div className="mt-12 pt-8 border-t border-[#2a2a2a]">
           <div className="flex flex-col items-center gap-4">
-            <p className="text-gray-500 text-sm mb-2">Formas de Envio</p>
-            <div className="flex items-center justify-center gap-12">
+            <p className="text-gray-500 text-sm mb-4">Formas de Envio</p>
+            <div className="flex items-center justify-center gap-12 py-4">
               <img 
                 src="/logo-correios.png" 
                 alt="Correios" 
