@@ -19,7 +19,8 @@ import {
   MinhaConta,
   Admin,
   TermosDeUso,
-  Checkout
+  Checkout,
+  Rastreio
 } from './pages'
 
 // Components
@@ -64,6 +65,7 @@ function App() {
           <Route path="/recuperar-senha" element={<RecuperarSenha />} />
           <Route path="/termos-de-uso" element={<TermosDeUso />} />
           <Route path="/checkout" element={<Checkout />} />
+          <Route path="/rastreio" element={<Rastreio />} />
 
           {/* Protegidas - Usuário */}
           <Route

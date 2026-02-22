@@ -91,6 +91,11 @@ const Footer = () => {
                     Login
                   </Link>
                 </li>
+                <li>
+                  <Link to="/rastreio" className="text-gray-400 hover:text-[#ff1e1e] transition-colors text-sm">
+                    Rastrear Pedido
+                  </Link>
+                </li>
               </ul>
             </div>
 
@@ -140,8 +145,29 @@ const Footer = () => {
             </div>
         </div>
 
-        {/* Copyright */}
+        {/* Formas de Envio */}
         <div className="mt-12 pt-8 border-t border-[#2a2a2a]">
+          <div className="flex flex-col items-center gap-4">
+            <p className="text-gray-500 text-sm mb-2">Formas de Envio</p>
+            <div className="flex items-center justify-center gap-12">
+              <img 
+                src="/logo-correios.png" 
+                alt="Correios" 
+                style={{ height: '80px', maxWidth: '150px' }}
+                className="object-contain"
+              />
+              <img 
+                src="/logo-jadlog.png" 
+                alt="Jadlog" 
+                style={{ height: '80px', maxWidth: '150px' }}
+                className="object-contain"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Copyright */}
+        <div className="mt-8 pt-8 border-t border-[#2a2a2a]">
           <div className="flex flex-col items-center gap-4">
             <p className="text-gray-500 text-sm text-center">
               © {currentYear} Motors Personalizados. Todos os direitos reservados.
