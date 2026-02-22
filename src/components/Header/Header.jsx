@@ -57,6 +57,7 @@ const Header = () => {
   const navLinks = [
     { path: '/', label: 'Home' },
     { path: '/personalizar', label: 'Personalizar' },
+    { path: '/rastreio', label: 'Rastrear Pedido' },
   ]
 
   return (

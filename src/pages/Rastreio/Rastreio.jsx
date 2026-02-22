@@ -177,7 +177,7 @@ const Rastreio = () => {
   }
 
   return (
-    <div className="bg-gradient-to-b from-[#0d0d0d] to-[#1a1a1a] px-4 pb-8" style={{ paddingTop: '20px' }}>
+    <div className="bg-gradient-to-b from-[#0d0d0d] to-[#1a1a1a] px-4 pb-8" style={{ paddingTop: '120px' }}>
       <div className="max-w-3xl mx-auto">
         {/* Cabeçalho */}
         <div className="text-center mb-6">
