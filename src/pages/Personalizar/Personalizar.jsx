@@ -10,6 +10,7 @@ import { useOrders } from '../../hooks/useOrders'
 import { Button, Input } from '../../components/UI'
 import ModalCadastroRapido from '../../components/ModalCadastroRapido'
 import { PRICES, FRETE_OPTIONS, formatCurrency, formatarCEP, validarCEP, buscarCEP } from '../../utils'
+import { trackAddToCart, trackViewContent } from '../../utils/metaPixel'
 import { supabase } from '../../lib/supabase'
 import { FiUpload, FiX, FiCheck, FiShoppingCart, FiAlertCircle, FiMapPin, FiTruck, FiLoader } from 'react-icons/fi'
 import toast from 'react-hot-toast'
@@ -123,6 +124,16 @@ const Personalizar = () => {
       }))
     }
   }, [user])
+
+  // Meta Pixel - Rastrear visualização do produto
+  useEffect(() => {
+    trackViewContent({
+      content_name: 'Miniatura Personalizada',
+      content_category: 'Produto',
+      content_type: 'product',
+      value: PRICES.BASE
+    })
+  }, [])
 
   // Obter frete selecionado
   const freteSelecionado = FRETE_OPTIONS.find(f => f.id === formData.frete_selecionado) || FRETE_OPTIONS[0]
@@ -362,6 +373,16 @@ const Personalizar = () => {
 
     // Navegar para checkout com dados do pedido
     toast.success('Pedido criado! Finalize o pagamento.')
+
+    // Meta Pixel - Rastrear adicionar ao carrinho
+    trackAddToCart({
+      content_name: `Miniatura Personalizada - ${formData.modelo_moto}`,
+      content_ids: [data?.id || `MP-${Date.now()}`],
+      content_type: 'product',
+      value: calcularPreco(),
+      num_items: 1
+    })
+
     navigate('/checkout', { 
       state: { 
         orderData: {

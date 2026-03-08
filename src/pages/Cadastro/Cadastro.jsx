@@ -9,6 +9,7 @@ import { useAuth } from '../../context/AuthContext'
 import { Button, Input } from '../../components/UI'
 import { FiArrowLeft, FiCheck } from 'react-icons/fi'
 import toast from 'react-hot-toast'
+import { trackCompleteRegistration, trackLead } from '../../utils/metaPixel'
 
 const Cadastro = () => {
   const [formData, setFormData] = useState({
@@ -60,10 +61,20 @@ const Cadastro = () => {
 
     // Se o Supabase retornou uma sessão, significa que não precisa confirmar email
     if (data?.session) {
+      // Meta Pixel - Rastrear registro completo
+      trackCompleteRegistration({
+        content_name: 'Cadastro de usuário',
+        status: 'success'
+      })
       toast.success('Conta criada com sucesso!')
       navigate('/minha-conta')
     } else {
       // Precisa confirmar email
+      // Meta Pixel - Rastrear lead (aguardando confirmação)
+      trackLead({
+        content_name: 'Cadastro de usuário',
+        content_category: 'Registro'
+      })
       toast.success('Conta criada! Verifique seu email para confirmar.')
       navigate('/login')
     }

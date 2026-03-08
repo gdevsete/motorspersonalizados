@@ -8,6 +8,7 @@ import { FiCopy, FiCheck, FiArrowLeft, FiClock, FiShield, FiAlertCircle } from '
 import toast from 'react-hot-toast'
 import { createPixPayment, formatCurrency, validateCPF, formatCPF, formatPhone, toCents } from '../../services/paymentService'
 import { useAuth } from '../../context/AuthContext'
+import { trackInitiateCheckout, trackPurchase, trackAddPaymentInfo } from '../../utils/metaPixel'
 
 const Checkout = () => {
   const navigate = useNavigate()
@@ -39,6 +40,19 @@ const Checkout = () => {
       navigate('/personalizar')
     }
   }, [orderData, navigate])
+
+  // Meta Pixel - Rastrear início do checkout
+  useEffect(() => {
+    if (orderData) {
+      trackInitiateCheckout({
+        content_name: `Miniatura Personalizada - ${orderData.modelo || 'Moto'}`,
+        content_ids: [orderData.orderId || 'miniatura-personalizada'],
+        content_type: 'product',
+        value: orderData.preco || 79,
+        num_items: 1
+      })
+    }
+  }, [orderData])
 
   // Timer de expiração do PIX
   useEffect(() => {
@@ -134,6 +148,22 @@ const Checkout = () => {
 
       setPaymentData(payment)
       toast.success('PIX gerado com sucesso!')
+
+      // Meta Pixel - Rastrear informações de pagamento adicionadas
+      trackAddPaymentInfo({
+        content_ids: [orderData.orderId || 'miniatura-personalizada'],
+        content_type: 'product',
+        value: orderData.preco || 79
+      })
+
+      // Meta Pixel - Rastrear compra (PIX gerado)
+      trackPurchase({
+        content_name: `Miniatura Personalizada - ${orderData.modelo || 'Moto'}`,
+        content_ids: [orderData.orderId || 'miniatura-personalizada'],
+        content_type: 'product',
+        value: orderData.preco || 79,
+        num_items: 1
+      })
 
     } catch (error) {
       console.error('Erro ao criar pagamento:', error)
