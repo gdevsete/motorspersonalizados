@@ -4,7 +4,7 @@
  */
 
 import { Link, useNavigate, useLocation } from 'react-router-dom'
-import { FiInstagram, FiFacebook, FiMail, FiMapPin } from 'react-icons/fi'
+import { FiInstagram, FiFacebook, FiMail, FiMapPin, FiMessageCircle } from 'react-icons/fi'
 import { SOCIAL_LINKS } from '../../utils/constants'
 
 const Footer = () => {
@@ -133,6 +133,17 @@ const Footer = () => {
             <div className="text-center">
               <h3 className="text-white font-semibold mb-4">Contato</h3>
               <ul className="space-y-3">
+                <li>
+                  <a 
+                    href="https://wa.me/message/IHTCCPO7DOJFB1"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-3 text-gray-400 hover:text-green-400 text-sm justify-center transition-colors"
+                  >
+                    <FiMessageCircle className="w-4 h-4 text-green-500" />
+                    <span>WhatsApp</span>
+                  </a>
+                </li>
                 <li className="flex items-center gap-3 text-gray-400 text-sm justify-center">
                   <FiMail className="w-4 h-4 text-[#ff1e1e]" />
                   <span>contato@motorspersonalizados.com</span>
