@@ -11,7 +11,7 @@ import { LoadingSpinner } from '../../components/UI'
 import { formatCurrency, formatDate, STATUS_LABELS, STATUS_COLORS, ORDER_STATUS } from '../../utils'
 import { 
   FiPackage, FiUsers, FiActivity, FiEye, FiTrash2, 
-  FiRefreshCw, FiCalendar, FiX, FiPlus,
+  FiRefreshCw, FiCalendar, FiX, FiPlus, FiShield,
   FiUser, FiMapPin, FiImage, FiMessageCircle, FiSend, FiCheck, FiTruck, FiCopy
 } from 'react-icons/fi'
 import toast from 'react-hot-toast'
@@ -23,20 +23,15 @@ import {
   closeConversation,
   subscribeToConversations
 } from '../../services/chatService'
-
-// Emails de administradores (via variável de ambiente)
-// Configure no Vercel: VITE_ADMIN_EMAILS=email1@x.com,email2@x.com
-const ADMIN_EMAILS = (import.meta.env.VITE_ADMIN_EMAILS || 'gordao@gmail.com')
-  .toLowerCase()
-  .split(',')
-  .map(email => email.trim())
-  .filter(Boolean)
+import { getAdminStatus, listAdmins, addAdmin, removeAdmin } from '../../services/adminService'
 
 const Admin = () => {
   const { user, loading: authLoading } = useAuth()
   
-  // Verificar se é admin
-  const isAdmin = ADMIN_EMAILS.includes(user?.email?.toLowerCase())
+  // Estados de admin (verificação segura via banco de dados)
+  const [isAdmin, setIsAdmin] = useState(false)
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false)
+  const [adminLoading, setAdminLoading] = useState(true)
 
   // Estados
   const [orders, setOrders] = useState([])
@@ -74,6 +69,59 @@ const Admin = () => {
     local: ''
   })
   const [savingAtualizacao, setSavingAtualizacao] = useState(false)
+
+  // Estados para gerenciamento de admins (apenas super admin)
+  const [adminList, setAdminList] = useState([])
+  const [loadingAdminList, setLoadingAdminList] = useState(false)
+  const [newAdminEmail, setNewAdminEmail] = useState('')
+  const [addingAdmin, setAddingAdmin] = useState(false)
+
+  // Verificar status de admin via banco de dados (seguro)
+  useEffect(() => {
+    const checkAdminStatus = async () => {
+      if (!user) {
+        setIsAdmin(false)
+        setIsSuperAdmin(false)
+        setAdminLoading(false)
+        return
+      }
+
+      try {
+        const status = await getAdminStatus()
+        setIsAdmin(status.isAdmin)
+        setIsSuperAdmin(status.isSuperAdmin)
+      } catch (err) {
+        console.error('Erro ao verificar admin:', err)
+        setIsAdmin(false)
+        setIsSuperAdmin(false)
+      } finally {
+        setAdminLoading(false)
+      }
+    }
+
+    if (!authLoading) {
+      checkAdminStatus()
+    }
+  }, [user, authLoading])
+
+  // Carregar lista de admins (apenas para super admin)
+  useEffect(() => {
+    const loadAdminList = async () => {
+      if (!isSuperAdmin) return
+      
+      setLoadingAdminList(true)
+      try {
+        const admins = await listAdmins()
+        setAdminList(admins)
+      } catch (err) {
+        console.error('Erro ao carregar admins:', err)
+      } finally {
+        setLoadingAdminList(false)
+      }
+    }
+
+    loadAdminList()
+  }, [isSuperAdmin])
 
   // Status pré-definidos para atualizações
   const STATUS_RASTREIO = [
@@ -527,8 +575,53 @@ const Admin = () => {
     }
   }, [isAdmin])
 
-  // Loading da autenticação
-  if (authLoading) {
+  // Função para adicionar admin (apenas super admin)
+  const handleAddAdmin = async () => {
+    if (!newAdminEmail.trim()) {
+      toast.error('Digite o email do novo admin')
+      return
+    }
+
+    setAddingAdmin(true)
+    try {
+      const result = await addAdmin(newAdminEmail)
+      if (result.success) {
+        toast.success(result.message || 'Admin adicionado!')
+        setNewAdminEmail('')
+        // Recarregar lista
+        const admins = await listAdmins()
+        setAdminList(admins)
+      } else {
+        toast.error(result.error || 'Erro ao adicionar admin')
+      }
+    } catch (err) {
+      toast.error('Erro ao adicionar admin')
+    } finally {
+      setAddingAdmin(false)
+    }
+  }
+
+  // Função para remover admin (apenas super admin)
+  const handleRemoveAdmin = async (email) => {
+    if (!confirm(`Remover ${email} dos administradores?`)) return
+
+    try {
+      const result = await removeAdmin(email)
+      if (result.success) {
+        toast.success(result.message || 'Admin removido!')
+        // Recarregar lista
+        const admins = await listAdmins()
+        setAdminList(admins)
+      } else {
+        toast.error(result.error || 'Erro ao remover admin')
+      }
+    } catch (err) {
+      toast.error('Erro ao remover admin')
+    }
+  }
+
+  // Loading da autenticação ou verificação de admin
+  if (authLoading || adminLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <LoadingSpinner size="lg" />
@@ -765,6 +858,89 @@ const Admin = () => {
               </div>
             )}
           </div>
+
+          {/* Card: Gerenciar Administradores (apenas super admin) */}
+          {isSuperAdmin && (
+            <div className="card border-2 border-[#ff1e1e]/30">
+              <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+                <FiShield className="text-[#ff1e1e]" />
+                Gerenciar Administradores
+                <span className="ml-2 px-2 py-0.5 text-xs bg-[#ff1e1e] rounded-full">Super Admin</span>
+              </h2>
+
+              {/* Adicionar novo admin */}
+              <div className="mb-6 p-4 bg-[#1a1a1a] rounded-lg">
+                <label className="block text-sm text-gray-400 mb-2">Adicionar novo administrador</label>
+                <div className="flex gap-2">
+                  <input
+                    type="email"
+                    value={newAdminEmail}
+                    onChange={(e) => setNewAdminEmail(e.target.value)}
+                    placeholder="email@exemplo.com"
+                    className="flex-1 bg-[#2a2a2a] border border-[#3a3a3a] rounded-lg px-4 py-2 focus:outline-none focus:border-[#ff1e1e]"
+                  />
+                  <button
+                    onClick={handleAddAdmin}
+                    disabled={addingAdmin}
+                    className="px-4 py-2 bg-[#ff1e1e] hover:bg-[#ff3e3e] rounded-lg font-medium transition-colors disabled:opacity-50 flex items-center gap-2"
+                  >
+                    {addingAdmin ? (
+                      <LoadingSpinner size="sm" />
+                    ) : (
+                      <>
+                        <FiPlus className="w-4 h-4" />
+                        Adicionar
+                      </>
+                    )}
+                  </button>
+                </div>
+                <p className="text-xs text-gray-500 mt-2">
+                  O email precisa estar cadastrado no sistema
+                </p>
+              </div>
+
+              {/* Lista de admins */}
+              {loadingAdminList ? (
+                <div className="flex justify-center py-8">
+                  <LoadingSpinner size="lg" />
+                </div>
+              ) : adminList.length === 0 ? (
+                <div className="text-center py-8 text-gray-400">
+                  <p>Nenhum administrador cadastrado</p>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {adminList.map((admin) => (
+                    <div
+                      key={admin.id}
+                      className={`flex items-center justify-between p-4 rounded-lg ${
+                        admin.is_super_admin ? 'bg-[#ff1e1e]/10 border border-[#ff1e1e]/30' : 'bg-[#1a1a1a]'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <FiUser className={`w-5 h-5 ${admin.is_super_admin ? 'text-[#ff1e1e]' : 'text-gray-400'}`} />
+                        <div>
+                          <span className="font-medium">{admin.email}</span>
+                          {admin.is_super_admin && (
+                            <span className="ml-2 px-2 py-0.5 text-xs bg-[#ff1e1e] rounded-full">Super Admin</span>
+                          )}
+                        </div>
+                      </div>
+                      {!admin.is_super_admin && (
+                        <button
+                          onClick={() => handleRemoveAdmin(admin.email)}
+                          className="p-2 rounded-lg bg-[#2a2a2a] hover:bg-red-600 transition-colors"
+                          title="Remover admin"
+                        >
+                          <FiTrash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Card: Chat de Suporte */}
           <div className="card">
