@@ -28,7 +28,12 @@ export const savePendingPayment = async ({
 }) => {
   try {
     // Log para debug
-    console.log('Tentando salvar pagamento pendente:', { userId, transactionId, orderId })
+    console.log('Tentando salvar pagamento pendente:', { userId, transactionId, orderId, expiresAt })
+
+    // Garantir que expiresAt tenha valor válido (padrão 24h se não vier)
+    const validExpiresAt = expiresAt && expiresAt !== '' 
+      ? expiresAt 
+      : new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
 
     const { data, error } = await supabase
       .from('pending_payments')
@@ -39,7 +44,7 @@ export const savePendingPayment = async ({
         qr_code: qrCode,
         qr_code_base64: qrCodeBase64,
         copy_paste: copyPaste,
-        expires_at: expiresAt,
+        expires_at: validExpiresAt,
         modelo: modelo,
         valor: valor,
         imagem_url: imagemUrl,

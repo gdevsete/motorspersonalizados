@@ -95,6 +95,10 @@ export default async function handler(req, res) {
       ? `data:image/png;base64,${qrCodeBase64Raw}`
       : qrCodeBase64Raw
 
+    // Calcular expiresAt - usa o valor da API ou gera padrão de 24h
+    const expiresAt = data.data?.paymentData?.expiresAt || 
+      new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+
     // Retornar dados do pagamento
     return res.status(200).json({
       success: true,
@@ -104,7 +108,7 @@ export default async function handler(req, res) {
       qrCode: data.data?.paymentData?.qrCode,
       qrCodeBase64: qrCodeBase64,
       copyPaste: data.data?.paymentData?.copyPaste,
-      expiresAt: data.data?.paymentData?.expiresAt,
+      expiresAt: expiresAt,
       invoiceUrl: data.data?.invoiceUrl
     })
 
