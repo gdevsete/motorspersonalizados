@@ -80,6 +80,46 @@ const validarPlaca = (placa) => {
   return regexAntiga.test(limpa) || regexMercosul.test(limpa)
 }
 
+/**
+ * Componente de contador de pessoas visualizando
+ * Número varia dinamicamente para criar senso de urgência
+ */
+const ViewersCounter = () => {
+  const [viewers, setViewers] = useState(12)
+
+  useEffect(() => {
+    // Valor inicial aleatório entre 8-18
+    const initial = 8 + Math.floor(Math.random() * 10)
+    setViewers(initial)
+
+    // Atualizar a cada 2-5 segundos
+    const interval = setInterval(() => {
+      setViewers(prev => {
+        // 55% chance de aumentar, 45% de diminuir
+        const change = Math.random() > 0.45 ? 1 : -1
+        const newValue = prev + change
+        // Manter entre 8 e 23
+        if (newValue < 8) return 9
+        if (newValue > 23) return 22
+        return newValue
+      })
+    }, 2000 + Math.random() * 3000)
+
+    return () => clearInterval(interval)
+  }, [])
+
+  return (
+    <div className="mb-4 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+      <div className="flex items-center gap-2 text-amber-400 text-sm">
+        <span className="text-lg">🔥</span>
+        <span className="font-medium">
+          Alta demanda! <span className="text-amber-300 font-bold">{viewers}</span> pessoas estão vendo
+        </span>
+      </div>
+    </div>
+  )
+}
+
 const Personalizar = () => {
   const { user } = useAuth()
   const { submitOrder, loading } = useOrders()
@@ -873,12 +913,7 @@ const Personalizar = () => {
               </div>
 
               {/* Urgência/Escassez */}
-              <div className="mb-4 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
-                <div className="flex items-center gap-2 text-amber-400 text-sm">
-                  <span className="text-lg">🔥</span>
-                  <span className="font-medium">Alta demanda! 12 pessoas estão vendo</span>
-                </div>
-              </div>
+              <ViewersCounter />
 
               {/* Garantia */}
               <div className="mb-4 p-3 bg-green-500/10 border border-green-500/30 rounded-lg">

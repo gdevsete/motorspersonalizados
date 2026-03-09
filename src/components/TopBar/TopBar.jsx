@@ -8,7 +8,7 @@ import { FiTruck, FiShield, FiClock } from 'react-icons/fi'
 
 const TopBar = () => {
   const [currentMessage, setCurrentMessage] = useState(0)
-  const [purchaseCount, setPurchaseCount] = useState(0)
+  const [purchaseCount, setPurchaseCount] = useState(27)
 
   // Mensagens rotativas
   const messages = [
@@ -17,11 +17,26 @@ const TopBar = () => {
     { icon: FiClock, text: `🔥 ${purchaseCount} pessoas compraram nas últimas 24h`, highlight: `${purchaseCount} pessoas` },
   ]
 
-  // Gerar número de compras "realista" entre 12-47
+  // Número dinâmico de compras - varia entre 23-47
   useEffect(() => {
-    const baseCount = 12
-    const randomAdd = Math.floor(Math.random() * 35)
-    setPurchaseCount(baseCount + randomAdd)
+    // Valor inicial aleatório
+    const initial = 23 + Math.floor(Math.random() * 20)
+    setPurchaseCount(initial)
+
+    // Atualizar a cada 3-7 segundos
+    const interval = setInterval(() => {
+      setPurchaseCount(prev => {
+        // 60% chance de aumentar, 40% de diminuir
+        const change = Math.random() > 0.4 ? 1 : -1
+        const newValue = prev + change
+        // Manter entre 23 e 47
+        if (newValue < 23) return 24
+        if (newValue > 47) return 46
+        return newValue
+      })
+    }, 3000 + Math.random() * 4000)
+
+    return () => clearInterval(interval)
   }, [])
 
   // Rotacionar mensagens a cada 4 segundos
