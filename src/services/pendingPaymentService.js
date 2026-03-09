@@ -27,9 +27,12 @@ export const savePendingPayment = async ({
   customerCpf
 }) => {
   try {
+    // Log para debug
+    console.log('Tentando salvar pagamento pendente:', { userId, transactionId, orderId })
+
     const { data, error } = await supabase
       .from('pending_payments')
-      .upsert({
+      .insert({
         user_id: userId,
         transaction_id: transactionId,
         order_id: orderId,
@@ -45,20 +48,19 @@ export const savePendingPayment = async ({
         customer_phone: customerPhone,
         customer_cpf: customerCpf,
         status: 'pending'
-      }, {
-        onConflict: 'transaction_id'
       })
       .select()
       .single()
 
     if (error) {
-      console.error('Erro ao salvar pagamento pendente:', error)
+      console.error('Erro Supabase ao salvar pagamento pendente:', error.message, error.code, error.details)
       throw error
     }
 
+    console.log('Pagamento pendente salvo com sucesso:', data?.id)
     return data
   } catch (error) {
-    console.error('Erro em savePendingPayment:', error)
+    console.error('Erro em savePendingPayment:', error.message || error)
     throw error
   }
 }
