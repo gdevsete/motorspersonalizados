@@ -20,7 +20,8 @@ import {
   Admin,
   TermosDeUso,
   Checkout,
-  Rastreio
+  Rastreio,
+  PedidoConfirmado
 } from './pages'
 
 // Components
@@ -66,6 +67,7 @@ function App() {
           <Route path="/termos-de-uso" element={<TermosDeUso />} />
           <Route path="/checkout" element={<Checkout />} />
           <Route path="/rastreio" element={<Rastreio />} />
+          <Route path="/pedido-confirmado" element={<PedidoConfirmado />} />
 
           {/* Protegidas - Usuário */}
           <Route
