@@ -8,16 +8,20 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { useOrders } from '../../hooks/useOrders'
 import { supabase } from '../../lib/supabase'
+import { getPendingPayments, cancelPendingPayment } from '../../services/pendingPaymentService'
 import { OrderSkeleton } from '../../components/UI/Skeleton'
 import { LoadingSpinner } from '../../components/UI'
 import { formatCurrency, formatDate, STATUS_LABELS, STATUS_COLORS } from '../../utils'
-import { FiPackage, FiPlus, FiExternalLink, FiUser, FiMail, FiPhone, FiMapPin, FiTruck, FiChevronDown, FiChevronUp, FiImage, FiLogOut } from 'react-icons/fi'
+import { FiPackage, FiPlus, FiExternalLink, FiUser, FiMail, FiPhone, FiMapPin, FiTruck, FiChevronDown, FiChevronUp, FiImage, FiLogOut, FiCreditCard, FiClock, FiX, FiCopy } from 'react-icons/fi'
 import toast from 'react-hot-toast'
 
 const MinhaConta = () => {
   const { user, loading: authLoading } = useAuth()
   const { orders, loading, error, fetchUserOrders } = useOrders()
   const [expandedOrder, setExpandedOrder] = useState(null)
+  const [pendingPayments, setPendingPayments] = useState([])
+  const [loadingPending, setLoadingPending] = useState(false)
+  const [expandedPayment, setExpandedPayment] = useState(null)
   const navigate = useNavigate()
 
   // Fazer logout
@@ -49,8 +53,61 @@ const MinhaConta = () => {
   useEffect(() => {
     if (user) {
       fetchUserOrders()
+      loadPendingPayments()
     }
   }, [user, fetchUserOrders])
+
+  // Carregar pagamentos pendentes
+  const loadPendingPayments = async () => {
+    if (!user?.id) return
+    setLoadingPending(true)
+    try {
+      const payments = await getPendingPayments(user.id)
+      setPendingPayments(payments)
+    } catch (err) {
+      console.error('Erro ao carregar pagamentos pendentes:', err)
+    } finally {
+      setLoadingPending(false)
+    }
+  }
+
+  // Cancelar pagamento pendente
+  const handleCancelPayment = async (transactionId) => {
+    try {
+      await cancelPendingPayment(transactionId)
+      toast.success('Pagamento cancelado')
+      loadPendingPayments()
+    } catch (err) {
+      toast.error('Erro ao cancelar pagamento')
+    }
+  }
+
+  // Copiar código PIX
+  const handleCopyPix = async (copyPaste) => {
+    try {
+      await navigator.clipboard.writeText(copyPaste)
+      toast.success('Código PIX copiado!')
+    } catch (err) {
+      toast.error('Erro ao copiar')
+    }
+  }
+
+  // Calcular tempo restante do PIX
+  const getTimeLeft = (expiresAt) => {
+    const now = new Date()
+    const expires = new Date(expiresAt)
+    const diff = expires - now
+
+    if (diff <= 0) return 'Expirado'
+
+    const hours = Math.floor(diff / (1000 * 60 * 60))
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60))
+
+    if (hours > 0) {
+      return `${hours}h ${minutes}min`
+    }
+    return `${minutes}min`
+  }
 
   // Toggle expandir pedido
   const toggleExpand = (orderId) => {
@@ -137,7 +194,104 @@ const MinhaConta = () => {
           </div>
 
           {/* Lista de Pedidos */}
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 space-y-8">
+            {/* Seção de Pagamentos Pendentes */}
+            {pendingPayments.length > 0 && (
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-bold flex items-center gap-2">
+                    <FiCreditCard className="w-6 h-6 text-amber-500" />
+                    Pagamentos Pendentes
+                  </h2>
+                  <span className="px-2 py-1 bg-amber-500/20 text-amber-400 rounded-full text-xs font-medium">
+                    {pendingPayments.length} aguardando
+                  </span>
+                </div>
+                
+                <div className="space-y-4">
+                  {pendingPayments.map((payment) => (
+                    <div key={payment.id} className="card border-2 border-amber-500/30 bg-amber-500/5">
+                      {/* Header */}
+                      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-4">
+                        <div className="flex gap-4">
+                          {payment.imagem_url ? (
+                            <img
+                              src={payment.imagem_url}
+                              alt={payment.modelo}
+                              className="w-16 h-16 object-cover rounded-lg border border-[#2a2a2a]"
+                            />
+                          ) : (
+                            <div className="w-16 h-16 bg-[#1a1a1a] rounded-lg flex items-center justify-center">
+                              <span className="text-2xl">🏍️</span>
+                            </div>
+                          )}
+                          <div>
+                            <h3 className="font-bold">{payment.modelo || 'Miniatura Personalizada'}</h3>
+                            <p className="text-sm text-gray-400 flex items-center gap-2 mt-1">
+                              <FiClock className="w-4 h-4 text-amber-400" />
+                              Expira em: <span className="text-amber-400 font-medium">{getTimeLeft(payment.expires_at)}</span>
+                            </p>
+                          </div>
+                        </div>
+                        <p className="text-xl font-bold text-[#ff1e1e]">
+                          {formatCurrency(payment.valor)}
+                        </p>
+                      </div>
+
+                      {/* QR Code e Copia e Cola */}
+                      <div className="bg-[#0a0a0a] rounded-lg p-4 mb-4">
+                        <div className="flex flex-col md:flex-row gap-6 items-center">
+                          {/* QR Code */}
+                          {payment.qr_code_base64 && (
+                            <div className="flex-shrink-0">
+                              <img
+                                src={payment.qr_code_base64}
+                                alt="QR Code PIX"
+                                className="w-32 h-32 rounded-lg bg-white p-2"
+                              />
+                            </div>
+                          )}
+                          
+                          {/* Código Copia e Cola */}
+                          <div className="flex-1 w-full">
+                            <p className="text-xs text-gray-500 mb-2">Código PIX Copia e Cola:</p>
+                            <div className="flex gap-2">
+                              <input
+                                type="text"
+                                value={payment.copy_paste}
+                                readOnly
+                                className="flex-1 bg-[#1a1a1a] rounded-lg px-4 py-3 text-sm font-mono text-gray-300 border border-[#2a2a2a] truncate"
+                              />
+                              <button
+                                onClick={() => handleCopyPix(payment.copy_paste)}
+                                className="px-4 py-3 bg-[#ff1e1e] hover:bg-[#ff3e3e] rounded-lg transition-colors flex items-center gap-2"
+                              >
+                                <FiCopy className="w-5 h-5" />
+                                <span className="hidden sm:inline">Copiar</span>
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Ações */}
+                      <div className="flex gap-3">
+                        <button
+                          onClick={() => handleCancelPayment(payment.transaction_id)}
+                          className="flex-1 py-2 px-4 border border-red-500/50 rounded-lg text-red-400 hover:bg-red-500/10 transition-colors flex items-center justify-center gap-2"
+                        >
+                          <FiX className="w-4 h-4" />
+                          Cancelar
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Meus Pedidos */}
+            <div>
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold flex items-center gap-2">
                 <FiPackage className="w-6 h-6 text-[#ff1e1e]" />
@@ -425,6 +579,7 @@ const MinhaConta = () => {
                 ))}
               </div>
             )}
+            </div>
           </div>
         </div>
       </div>

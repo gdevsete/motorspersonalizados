@@ -7,6 +7,7 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { FiCopy, FiCheck, FiArrowLeft, FiClock, FiShield, FiAlertCircle } from 'react-icons/fi'
 import toast from 'react-hot-toast'
 import { createPixPayment, formatCurrency, validateCPF, formatCPF, formatPhone, toCents } from '../../services/paymentService'
+import { savePendingPayment, markPaymentAsPaid } from '../../services/pendingPaymentService'
 import { useAuth } from '../../context/AuthContext'
 import { trackInitiateCheckout, trackAddPaymentInfo } from '../../utils/metaPixel'
 
@@ -93,6 +94,15 @@ const Checkout = () => {
         const data = await response.json()
 
         if (data.success && data.isPaid) {
+          // Marcar pagamento como pago no banco
+          if (paymentData.transactionId) {
+            try {
+              await markPaymentAsPaid(paymentData.transactionId)
+            } catch (err) {
+              console.error('Erro ao marcar pagamento como pago:', err)
+            }
+          }
+
           // Pagamento confirmado! Redirecionar para página de confirmação
           const params = new URLSearchParams({
             order_id: orderData.orderId || paymentData.transactionId,
@@ -184,6 +194,32 @@ const Checkout = () => {
 
       setPaymentData(payment)
       toast.success('PIX gerado com sucesso!')
+
+      // Salvar pagamento pendente no banco (se usuário logado)
+      if (user?.id && payment.transactionId) {
+        try {
+          await savePendingPayment({
+            userId: user.id,
+            transactionId: payment.transactionId,
+            orderId: orderData.orderId || `MP-${Date.now()}`,
+            qrCode: payment.qrCode,
+            qrCodeBase64: payment.qrCodeBase64,
+            copyPaste: payment.copyPaste,
+            expiresAt: payment.expiresAt,
+            modelo: orderData.modelo || 'Moto',
+            valor: orderData.preco || 79,
+            imagemUrl: orderData.imagem || null,
+            customerName: formData.name.trim(),
+            customerEmail: formData.email.trim(),
+            customerPhone: formData.phone,
+            customerCpf: formData.cpf
+          })
+          console.log('Pagamento pendente salvo no banco')
+        } catch (err) {
+          console.error('Erro ao salvar pagamento pendente:', err)
+          // Não bloqueia o fluxo
+        }
+      }
 
       // Meta Pixel - Rastrear informações de pagamento adicionadas
       trackAddPaymentInfo({
