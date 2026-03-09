@@ -5,7 +5,7 @@
 
 import { useEffect, useState, useRef, useCallback } from 'react'
 import { Link } from 'react-router-dom'
-import { FiUpload, FiEdit3, FiPackage, FiStar, FiArrowRight, FiCheck, FiChevronLeft, FiChevronRight } from 'react-icons/fi'
+import { FiUpload, FiEdit3, FiPackage, FiStar, FiArrowRight, FiCheck, FiChevronLeft, FiChevronRight, FiShield, FiHelpCircle, FiChevronDown } from 'react-icons/fi'
 import { getTestimonials } from '../../services/testimonialService'
 import { TestimonialSkeleton } from '../../components/UI/Skeleton'
 import ImageGallery from '../../components/Gallery/ImageGallery'
@@ -154,8 +154,18 @@ const Home = () => {
   const benefits = [
     'Peça única e exclusiva',
     'Alta qualidade de acabamento',
-    'Entrega para todo Brasil',
-    'Garantia de satisfação',
+    'Frete grátis para todo Brasil',
+    'Garantia de 7 dias',
+  ]
+
+  // FAQ - Perguntas frequentes
+  const [openFaq, setOpenFaq] = useState(null)
+  const faqs = [
+    { q: 'Quanto tempo demora para receber?', a: 'O prazo de produção é de 3-5 dias úteis. Após a postagem, o prazo de entrega varia de acordo com a modalidade de frete escolhida (2 a 8 dias úteis).' },
+    { q: 'Posso personalizar qualquer modelo de moto?', a: 'Sim! Trabalhamos com todos os modelos de motos. Basta enviar uma foto da sua moto que criamos a miniatura personalizada.' },
+    { q: 'E se eu não gostar do resultado?', a: 'Oferecemos garantia de 7 dias. Se você não ficar satisfeito, devolvemos seu dinheiro ou refazemos a miniatura.' },
+    { q: 'Como funciona o pagamento?', a: 'Aceitamos PIX com confirmação instantânea. Após o pagamento, sua miniatura entra imediatamente em produção.' },
+    { q: 'O chaveiro é resistente?', a: 'Sim! Utilizamos metal die-cast (zamac), ABS de engenharia e aço niquelado. É feito para uso diário.' },
   ]
 
   return (
@@ -206,8 +216,14 @@ const Home = () => {
                 </a>
               </div>
 
+              {/* Badge de Garantia */}
+              <div className="mt-4 md:mt-6 flex items-center gap-2 bg-green-500/10 border border-green-500/30 rounded-lg px-3 py-2 md:px-4 md:py-2.5 w-fit">
+                <FiShield className="w-4 h-4 md:w-5 md:h-5 text-green-500" />
+                <span className="text-green-400 text-xs md:text-sm font-medium">Garantia de 7 dias ou seu dinheiro de volta</span>
+              </div>
+
               {/* Prova social */}
-              <div className="mt-4 md:mt-10 flex items-center gap-3 md:gap-6">
+              <div className="mt-4 md:mt-6 flex items-center gap-3 md:gap-6">
                 <div className="flex -space-x-2 md:-space-x-3">
                   {[1, 2, 3, 4].map((i) => (
                     <div
@@ -593,8 +609,53 @@ const Home = () => {
               </Link>
             </div>
             <p className="mt-6 text-gray-500 text-sm">
-              A partir de R$ 79,00 • Entrega para todo Brasil
+              <span className="line-through text-gray-600">De R$ 99,00</span>{' '}
+              <span className="text-[#ff1e1e] font-bold">por R$ 79,00</span> • Frete Grátis
             </p>
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ - Perguntas Frequentes */}
+      <section className="py-20 md:py-28 bg-[#0a0a0a]">
+        <div className="container-custom">
+          <div className="section-header">
+            <span className="section-badge bg-[#1a1a1a] text-[#ff1e1e]">
+              Dúvidas
+            </span>
+            <h2 className="section-title">
+              Perguntas <span className="text-gradient">Frequentes</span>
+            </h2>
+            <p className="section-description">
+              Tire suas dúvidas antes de fazer seu pedido
+            </p>
+          </div>
+
+          <div className="max-w-3xl mx-auto space-y-4">
+            {faqs.map((faq, index) => (
+              <div 
+                key={index}
+                className="card cursor-pointer hover:border-[#ff1e1e]/50 transition-all duration-300"
+                onClick={() => setOpenFaq(openFaq === index ? null : index)}
+              >
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <FiHelpCircle className="w-5 h-5 text-[#ff1e1e] flex-shrink-0" />
+                    <h3 className="font-semibold text-white">{faq.q}</h3>
+                  </div>
+                  <FiChevronDown 
+                    className={`w-5 h-5 text-gray-400 transition-transform duration-300 flex-shrink-0 ${
+                      openFaq === index ? 'rotate-180' : ''
+                    }`} 
+                  />
+                </div>
+                {openFaq === index && (
+                  <p className="mt-4 text-gray-400 text-sm leading-relaxed animate-fadeIn">
+                    {faq.a}
+                  </p>
+                )}
+              </div>
+            ))}
           </div>
         </div>
       </section>

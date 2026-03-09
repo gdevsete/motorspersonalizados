@@ -872,6 +872,22 @@ const Personalizar = () => {
                 </div>
               </div>
 
+              {/* Urgência/Escassez */}
+              <div className="mb-4 p-3 bg-amber-500/10 border border-amber-500/30 rounded-lg">
+                <div className="flex items-center gap-2 text-amber-400 text-sm">
+                  <span className="text-lg">🔥</span>
+                  <span className="font-medium">Alta demanda! 12 pessoas estão vendo</span>
+                </div>
+              </div>
+
+              {/* Garantia */}
+              <div className="mb-4 p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
+                <div className="flex items-center gap-2 text-green-400 text-sm">
+                  <span className="text-lg">✅</span>
+                  <span>Garantia de 7 dias ou dinheiro de volta</span>
+                </div>
+              </div>
+
               {/* Botão de submit */}
               <Button
                 type="submit"

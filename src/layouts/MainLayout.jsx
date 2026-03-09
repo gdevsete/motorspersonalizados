@@ -8,6 +8,7 @@ import { Outlet, useLocation } from 'react-router-dom'
 import Header from '../components/Header'
 import Footer from '../components/Footer'
 import ChatWidget from '../components/ChatWidget'
+import TopBar from '../components/TopBar'
 import { updatePresence } from '../services/visitorService'
 
 const MainLayout = () => {
@@ -37,10 +38,11 @@ const MainLayout = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-[#0a0a0a]">
+      <TopBar />
       <Header />
       
-      {/* Conteúdo principal com espaço para header fixo */}
-      <main className="flex-1 pt-20 md:pt-24">
+      {/* Conteúdo principal com espaço para TopBar + Header fixo */}
+      <main className="flex-1 pt-28 md:pt-32">
         <Outlet />
       </main>
       

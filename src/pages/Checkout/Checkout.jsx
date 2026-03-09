@@ -351,6 +351,35 @@ const Checkout = () => {
                 <p className="text-xs text-gray-500">Seus dados estão protegidos</p>
               </div>
             </div>
+
+            {/* Selos de Confiança */}
+            <div className="grid grid-cols-3 gap-3 mt-4">
+              <div className="flex flex-col items-center gap-1 p-3 bg-[#1a1a1a] rounded-lg border border-[#2a2a2a]">
+                <span className="text-xl">🔒</span>
+                <span className="text-xs text-gray-400 text-center">Compra Segura</span>
+              </div>
+              <div className="flex flex-col items-center gap-1 p-3 bg-[#1a1a1a] rounded-lg border border-[#2a2a2a]">
+                <span className="text-xl">✅</span>
+                <span className="text-xs text-gray-400 text-center">Garantia 7 dias</span>
+              </div>
+              <div className="flex flex-col items-center gap-1 p-3 bg-[#1a1a1a] rounded-lg border border-[#2a2a2a]">
+                <span className="text-xl">🚚</span>
+                <span className="text-xs text-gray-400 text-center">Frete Grátis</span>
+              </div>
+            </div>
+
+            {/* Mini Depoimento */}
+            <div className="mt-4 p-4 bg-gradient-to-r from-[#ff1e1e]/10 to-transparent rounded-xl border border-[#ff1e1e]/20">
+              <div className="flex items-start gap-3">
+                <div className="w-10 h-10 rounded-full bg-[#2a2a2a] flex items-center justify-center shrink-0">
+                  <span className="text-sm">⭐</span>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-300 italic">"Ficou incrível! A miniatura ficou igualzinha à minha moto."</p>
+                  <p className="text-xs text-gray-500 mt-1">— Carlos M., São Paulo</p>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* Coluna Direita - Formulário ou QR Code */}
