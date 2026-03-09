@@ -24,14 +24,19 @@ import {
   subscribeToConversations
 } from '../../services/chatService'
 
-// Email do administrador
-const ADMIN_EMAIL = 'gordao@gmail.com'
+// Emails de administradores (via variável de ambiente)
+// Configure no Vercel: VITE_ADMIN_EMAILS=email1@x.com,email2@x.com
+const ADMIN_EMAILS = (import.meta.env.VITE_ADMIN_EMAILS || 'gordao@gmail.com')
+  .toLowerCase()
+  .split(',')
+  .map(email => email.trim())
+  .filter(Boolean)
 
 const Admin = () => {
   const { user, loading: authLoading } = useAuth()
   
   // Verificar se é admin
-  const isAdmin = user?.email?.toLowerCase() === ADMIN_EMAIL.toLowerCase()
+  const isAdmin = ADMIN_EMAILS.includes(user?.email?.toLowerCase())
 
   // Estados
   const [orders, setOrders] = useState([])
