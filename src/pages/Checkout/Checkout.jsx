@@ -8,7 +8,7 @@ import { FiCopy, FiCheck, FiArrowLeft, FiClock, FiShield, FiAlertCircle } from '
 import toast from 'react-hot-toast'
 import { createPixPayment, formatCurrency, validateCPF, formatCPF, formatPhone, toCents } from '../../services/paymentService'
 import { useAuth } from '../../context/AuthContext'
-import { trackInitiateCheckout, trackPurchase, trackAddPaymentInfo } from '../../utils/metaPixel'
+import { trackInitiateCheckout, trackAddPaymentInfo } from '../../utils/metaPixel'
 
 const Checkout = () => {
   const navigate = useNavigate()
@@ -32,6 +32,7 @@ const Checkout = () => {
   const [paymentData, setPaymentData] = useState(null)
   const [copied, setCopied] = useState(false)
   const [timeLeft, setTimeLeft] = useState(null)
+  const [checkingPayment, setCheckingPayment] = useState(false)
 
   // Redirecionar se não tiver dados do pedido
   useEffect(() => {
@@ -80,6 +81,41 @@ const Checkout = () => {
     const interval = setInterval(updateTimer, 1000)
     return () => clearInterval(interval)
   }, [paymentData])
+
+  // Polling para verificar status do pagamento
+  useEffect(() => {
+    if (!paymentData?.transactionId) return
+
+    const checkPaymentStatus = async () => {
+      try {
+        setCheckingPayment(true)
+        const response = await fetch(`/api/check-payment-status?transactionId=${paymentData.transactionId}`)
+        const data = await response.json()
+
+        if (data.success && data.isPaid) {
+          // Pagamento confirmado! Redirecionar para página de confirmação
+          const params = new URLSearchParams({
+            order_id: orderData.orderId || paymentData.transactionId,
+            value: orderData.preco || 79,
+            modelo: orderData.modelo || 'Moto'
+          })
+          navigate(`/pedido-confirmado?${params.toString()}`)
+        }
+      } catch (error) {
+        console.error('Erro ao verificar pagamento:', error)
+      } finally {
+        setCheckingPayment(false)
+      }
+    }
+
+    // Verificar imediatamente
+    checkPaymentStatus()
+
+    // Polling a cada 5 segundos
+    const interval = setInterval(checkPaymentStatus, 5000)
+
+    return () => clearInterval(interval)
+  }, [paymentData, orderData, navigate])
 
   // Validar formulário
   const validateForm = () => {
@@ -156,14 +192,7 @@ const Checkout = () => {
         value: orderData.preco || 79
       })
 
-      // Meta Pixel - Rastrear compra (PIX gerado)
-      trackPurchase({
-        content_name: `Miniatura Personalizada - ${orderData.modelo || 'Moto'}`,
-        content_ids: [orderData.orderId || 'miniatura-personalizada'],
-        content_type: 'product',
-        value: orderData.preco || 79,
-        num_items: 1
-      })
+      // O evento Purchase será disparado na página de confirmação após pagamento
 
     } catch (error) {
       console.error('Erro ao criar pagamento:', error)
