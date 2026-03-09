@@ -4,7 +4,7 @@
  */
 
 import { Link, useNavigate, useLocation } from 'react-router-dom'
-import { FiInstagram, FiFacebook, FiMail, FiMapPin, FiMessageCircle } from 'react-icons/fi'
+import { FiInstagram, FiFacebook, FiMail, FiMapPin } from 'react-icons/fi'
 import { SOCIAL_LINKS } from '../../utils/constants'
 
 const Footer = () => {
@@ -140,7 +140,7 @@ const Footer = () => {
                     rel="noopener noreferrer"
                     className="flex items-center gap-3 text-gray-400 hover:text-green-400 text-sm justify-center transition-colors"
                   >
-                    <FiMessageCircle className="w-4 h-4 text-green-500" />
+                    <img src="/logo-whatsapp.png" alt="WhatsApp" className="w-5 h-5" />
                     <span>WhatsApp</span>
                   </a>
                 </li>
