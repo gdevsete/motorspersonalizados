@@ -41,8 +41,8 @@ const MainLayout = () => {
       <TopBar />
       <Header />
       
-      {/* Conteúdo principal com espaço para TopBar + Header fixo */}
-      <main className="flex-1 pt-28 md:pt-32">
+      {/* Conteúdo principal com espaço para TopBar (~28px) + Header (56px/64px/80px) */}
+      <main className="flex-1 pt-[90px] sm:pt-[104px] md:pt-[112px]">
         <Outlet />
       </main>
       

@@ -61,20 +61,17 @@ const Header = () => {
   ]
 
   return (
-    <header className="fixed top-8 left-0 right-0 z-50 bg-[#0a0a0a]/95 backdrop-blur-md border-b border-[#2a2a2a]">
+    <header className="fixed top-[28px] sm:top-[32px] left-0 right-0 z-50 bg-[#0a0a0a]/95 backdrop-blur-md border-b border-[#2a2a2a]">
       <div className="container-custom">
-        <nav className="flex items-center justify-between h-20 md:h-24 overflow-hidden">
+        <nav className="flex items-center justify-between h-14 sm:h-16 md:h-20">
           {/* Logo */}
-          <Link 
-            to="/" 
-            className="flex items-center group"
-          >
+          <div className="flex items-center">
             <img 
               src="/logo.png" 
               alt="Motors Personalizados" 
-              className="h-14 md:h-16 w-auto transition-all duration-300 group-hover:scale-105"
+              className="h-8 sm:h-10 md:h-14 w-auto"
             />
-          </Link>
+          </div>
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-8">

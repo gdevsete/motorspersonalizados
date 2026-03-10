@@ -277,18 +277,18 @@ const Checkout = () => {
   if (!orderData) return null
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a] py-8 md:py-16">
+    <div className="min-h-screen bg-[#0a0a0a] py-4 sm:py-8 md:py-16">
       <div className="container-custom max-w-4xl">
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-4 sm:mb-8">
           <button
             onClick={() => navigate(-1)}
-            className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-4"
+            className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-2 sm:mb-4"
           >
             <FiArrowLeft className="w-5 h-5" />
             Voltar
           </button>
-          <h1 className="text-2xl md:text-3xl font-bold">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold">
             Finalizar <span className="text-gradient">Pedido</span>
           </h1>
         </div>

@@ -641,15 +641,15 @@ const Admin = () => {
   }
 
   return (
-    <div className="min-h-screen py-8">
+    <div className="min-h-screen py-4 sm:py-6 md:py-8">
       <div className="container-custom">
         {/* Header */}
-        <div className="mb-6 flex items-center justify-between">
+        <div className="mb-4 sm:mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold mb-2">
+            <h1 className="text-2xl sm:text-3xl font-bold mb-1 sm:mb-2">
               Painel <span className="text-gradient">Admin</span>
             </h1>
-            <p className="text-gray-400">Gerencie pedidos e veja visitantes online</p>
+            <p className="text-gray-400 text-sm sm:text-base">Gerencie pedidos e veja visitantes online</p>
           </div>
           <button
             onClick={() => {
@@ -659,7 +659,7 @@ const Admin = () => {
               loadConversations()
               toast.success('Dados atualizados!')
             }}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#1a1a1a] text-gray-400 hover:text-white transition-all"
+            className="flex items-center gap-2 px-4 py-2 rounded-lg bg-[#1a1a1a] text-gray-400 hover:text-white transition-all self-start sm:self-auto"
           >
             <FiRefreshCw className="w-4 h-4" />
             Atualizar

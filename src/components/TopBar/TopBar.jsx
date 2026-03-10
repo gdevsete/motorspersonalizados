@@ -50,11 +50,11 @@ const TopBar = () => {
   const CurrentIcon = messages[currentMessage].icon
 
   return (
-    <div className="fixed top-0 left-0 right-0 z-[60] bg-gradient-to-r from-[#ff1e1e] to-[#ff4444] text-white py-2 px-4">
+    <div className="fixed top-0 left-0 right-0 z-[60] bg-gradient-to-r from-[#ff1e1e] to-[#ff4444] text-white py-1.5 px-2 sm:px-4">
       <div className="container-custom">
-        <div className="flex items-center justify-center gap-2 text-sm font-medium animate-fadeIn" key={currentMessage}>
-          <CurrentIcon className="w-4 h-4" />
-          <span>{messages[currentMessage].text}</span>
+        <div className="flex items-center justify-center gap-1.5 sm:gap-2 text-[11px] sm:text-sm font-medium animate-fadeIn" key={currentMessage}>
+          <CurrentIcon className="w-3 h-3 sm:w-4 sm:h-4 flex-shrink-0" />
+          <span className="text-center leading-tight">{messages[currentMessage].text}</span>
         </div>
       </div>
     </div>

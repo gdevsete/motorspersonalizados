@@ -494,12 +494,13 @@ const Personalizar = () => {
   }
 
   return (
-    <div className="min-h-screen py-12">
+    <div className="min-h-screen py-4 sm:py-8 md:py-12">
       <div className="container-custom">
         {/* Header */}
-        <div className="section-header">
-          <p className="section-description">
-          </p>
+        <div className="section-header mb-4 sm:mb-6">
+          <h1 className="text-xl sm:text-2xl md:text-3xl font-bold mb-2">
+            Personalize sua <span className="text-gradient">miniatura</span>
+          </h1>
         </div>
 
         <div className="grid lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
